@@ -1,5 +1,6 @@
-package main
+package entity
 
-func main() {
-
+type Genre struct {
+	ID   uint64
+	Name string
 }

@@ -1,5 +1,8 @@
-package main
+package entity
 
-func main() {
-
+type Actor struct {
+	ID      uint64
+	Name    string
+	Surname string
+	Films   []*Film
 }
