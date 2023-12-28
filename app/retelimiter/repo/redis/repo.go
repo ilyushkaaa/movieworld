@@ -1,5 +1,5 @@
 package ratelimiterrepo
 
-func main() {
-
+type RateLimiterRepo interface {
+	CheckRateLimitRepo(userAddr string) bool
 }
