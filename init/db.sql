@@ -60,17 +60,6 @@ CREATE TABLE IF NOT EXISTS reviews
 );
 
 
-CREATE TABLE IF NOT EXISTS reviews
-(
-    id   SERIAL PRIMARY KEY,
-    film_id INTEGER NOT NULL REFERENCES films (id),
-    user_id INTEGER NOT NULL REFERENCES users(id),
-    mark INTEGER NOT NULL,
-    comment TEXT
-    );
-
-
-
 CREATE TABLE IF NOT EXISTS favourite_films
 (
     id   SERIAL PRIMARY KEY,

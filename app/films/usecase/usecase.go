@@ -8,8 +8,9 @@ type FilmUseCase interface {
 	GetFilmsByActor(ID uint64) ([]*entity.Film, error)
 	GetFilmsByGenre(genre string) ([]*entity.Film, error)
 	GetFilmsByCountry(country string) ([]*entity.Film, error)
-	GetFilmsByMinAge(minAge uint8) ([]*entity.Film, error)
 	GetFilmsByProducer(producer string) ([]*entity.Film, error)
 	GetSoonFilms() ([]*entity.Film, error)
 	GetFavouriteFilms(userID uint64) ([]*entity.Film, error)
+	AddFavouriteFilm(userID, filmID uint64) (bool, error)
+	DeleteFavouriteFilm(userID, filmID uint64) (bool, error)
 }

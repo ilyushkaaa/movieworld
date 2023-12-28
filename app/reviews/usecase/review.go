@@ -1,10 +1,13 @@
 package reviewusecase
 
-import "kinopoisk/app/entity"
+import (
+	"kinopoisk/app/dto"
+	"kinopoisk/app/entity"
+)
 
 type ReviewUseCase interface {
 	GetFilmReviews(filmID uint64) ([]*entity.Review, error)
-	NewReview(newReview *entity.Review, filmID, userID int) (*entity.Review, error)
-	DeleteReview(filmID, userID int) (bool, error)
-	UpdateReview(reviewToUpdate *entity.Review, userID int) (*entity.Review, error)
+	NewReview(newReview *dto.ReviewDTO, filmID, userID uint64) (*entity.Review, error)
+	DeleteReview(reviewID, userID uint64) (bool, error)
+	UpdateReview(reviewToUpdate *dto.ReviewDTO, reviewID, userID uint64) (*entity.Review, error)
 }

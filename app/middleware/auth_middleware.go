@@ -11,8 +11,12 @@ import (
 )
 
 type userKey int
+type tokenKey int
 
-const MyUserKey userKey = 1
+const (
+	MyUserKey  userKey  = 1
+	MyTokenKey tokenKey = 2
+)
 
 func AuthMiddleware(logger *zap.SugaredLogger, uc userusecase.UserUseCase, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -33,6 +37,7 @@ func AuthMiddleware(logger *zap.SugaredLogger, uc userusecase.UserUseCase, next 
 		sessionUser := mySession.User
 		ctx := r.Context()
 		ctx = context.WithValue(ctx, MyUserKey, sessionUser)
+		ctx = context.WithValue(ctx, MyTokenKey, tokenValue)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
 }
