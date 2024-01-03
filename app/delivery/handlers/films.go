@@ -211,7 +211,7 @@ func (fh *FilmHandler) DeleteFavouriteFilm(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	if !wasDeleted {
-		result := fmt.Sprintf(`{"meassage": "film with ID %d is not found"}`, filmIDInt)
+		result := fmt.Sprintf(`{"meassage": "film with ID %d is not found in favourites"}`, filmIDInt)
 		delivery.WriteResponse(fh.Logger, w, []byte(result), http.StatusNotFound)
 		return
 	}
