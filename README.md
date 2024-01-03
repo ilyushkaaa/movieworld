@@ -15,7 +15,7 @@ genre country  producer
 9. POST /review/{FILM_ID} - оставить отзыв
 10. DELETE /review/{REVIEW_ID} - удалить отзыв  
 11. PUT /review/{REVIEW_ID} - изменить отзыв
-12. GET /films/favourite/{USER_ID} - избранные фильмы пользователя
+12. GET /films/favourite - избранные фильмы пользователя
 13. POST /films/favourite/{FILM_ID} - добавить фильм в избранное
 14. GET /review/{FILM_ID} - получение отзывов о фильме
 15. DELETE /films/favourite/{FILM_ID}/{USER_ID}
