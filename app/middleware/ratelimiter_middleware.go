@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"go.uber.org/zap"
-	ratelimiterusecase "kinopoisk/app/retelimiter/usecase"
+	ratelimiterusecase "kinopoisk/app/ratelimiter/usecase"
 	"net/http"
 )
 

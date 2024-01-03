@@ -10,8 +10,5 @@ type Film struct {
 	MinAge        uint8
 	Country       string
 	ProducerName  string
-	Actors        []*Actor
-	Genres        []*Genre
 	DateOfRelease time.Time
-	Reviews       []*Review
 }

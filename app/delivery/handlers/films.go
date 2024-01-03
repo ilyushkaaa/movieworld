@@ -2,11 +2,13 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
 	"kinopoisk/app/delivery"
 	"kinopoisk/app/entity"
+	errorapp "kinopoisk/app/errors"
 	filmusecase "kinopoisk/app/films/usecase"
 	"kinopoisk/app/middleware"
 	"net/http"
@@ -76,6 +78,11 @@ func (fh *FilmHandler) GetFilmByID(w http.ResponseWriter, r *http.Request) {
 		delivery.WriteResponse(fh.Logger, w, []byte(errText), http.StatusInternalServerError)
 		return
 	}
+	if film == nil {
+		errText := fmt.Sprintf(`{"message": "film with ID %d is not found"}`, filmIDInt)
+		delivery.WriteResponse(fh.Logger, w, []byte(errText), http.StatusNotFound)
+		return
+	}
 	filmJSON, err := json.Marshal(film)
 	if err != nil {
 		errText := fmt.Sprintf(`{"message": "error in coding film: %s"}`, err)
@@ -85,7 +92,7 @@ func (fh *FilmHandler) GetFilmByID(w http.ResponseWriter, r *http.Request) {
 	delivery.WriteResponse(fh.Logger, w, filmJSON, http.StatusOK)
 }
 
-func (fh *FilmHandler) GetFilmByActor(w http.ResponseWriter, r *http.Request) {
+func (fh *FilmHandler) GetFilmsByActor(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	actorID := vars["ACTOR_ID"]
 	actorIDInt, err := strconv.ParseUint(actorID, 10, 64)
@@ -163,6 +170,11 @@ func (fh *FilmHandler) AddFavouriteFilm(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	wasAdded, err := fh.FilmUseCases.AddFavouriteFilm(user.ID, filmIDInt)
+	if errors.Is(err, errorapp.ErrorNoFilm) {
+		errText := fmt.Sprintf(`{"message": "%s"}`, err)
+		delivery.WriteResponse(fh.Logger, w, []byte(errText), http.StatusNotFound)
+		return
+	}
 	if err != nil {
 		errText := fmt.Sprintf(`{"message": "internal server error: %s"}`, err)
 		delivery.WriteResponse(fh.Logger, w, []byte(errText), http.StatusInternalServerError)
@@ -199,10 +211,39 @@ func (fh *FilmHandler) DeleteFavouriteFilm(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	if !wasDeleted {
-		result := fmt.Sprintf(`{"meassage": "not found"}`)
+		result := fmt.Sprintf(`{"meassage": "film with ID %d is not found"}`, filmIDInt)
 		delivery.WriteResponse(fh.Logger, w, []byte(result), http.StatusNotFound)
 		return
 	}
-	result := fmt.Sprintf(`{"result": "success"}`)
+	result := `{"result": "success"}`
 	delivery.WriteResponse(fh.Logger, w, []byte(result), http.StatusOK)
+}
+
+func (fh *FilmHandler) GetFilmActors(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	filmID := vars["FILM_ID"]
+	filmIDint, err := strconv.ParseUint(filmID, 10, 64)
+	if err != nil {
+		errText := fmt.Sprintf(`{"message": "bad format of actor id: %s"}`, err)
+		delivery.WriteResponse(fh.Logger, w, []byte(errText), http.StatusBadRequest)
+		return
+	}
+	actors, err := fh.FilmUseCases.GetFilmActors(filmIDint)
+	if errors.Is(err, errorapp.ErrorNoFilm) {
+		errText := fmt.Sprintf(`{"message": "no film with id: %d"}`, filmIDint)
+		delivery.WriteResponse(fh.Logger, w, []byte(errText), http.StatusNotFound)
+		return
+	}
+	if err != nil {
+		errText := fmt.Sprintf(`{"message": "internal server error: %s"}`, err)
+		delivery.WriteResponse(fh.Logger, w, []byte(errText), http.StatusInternalServerError)
+		return
+	}
+	actorsJSON, err := json.Marshal(actors)
+	if err != nil {
+		errText := fmt.Sprintf(`{"message": "error in coding actors: %s"}`, err)
+		delivery.WriteResponse(fh.Logger, w, []byte(errText), http.StatusInternalServerError)
+		return
+	}
+	delivery.WriteResponse(fh.Logger, w, actorsJSON, http.StatusOK)
 }

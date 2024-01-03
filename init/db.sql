@@ -11,9 +11,9 @@ CREATE TABLE IF NOT EXISTS films
     name VARCHAR(255) NOT NULL,
     description TEXT NOT NULL,
     duration INTEGER NOT NULL,
-    min_age_ INTEGER NOT NULL,
+    min_age INTEGER NOT NULL,
     country varchar(255) NOT NULL,
-    producer_name varchar(255) NOT NULL
+    producer_name varchar(255) NOT NULL,
     date_of_release DATE NOT NULL
 
 );

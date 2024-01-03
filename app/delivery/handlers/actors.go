@@ -54,6 +54,11 @@ func (ah *ActorHandler) GetActorByID(w http.ResponseWriter, r *http.Request) {
 		delivery.WriteResponse(ah.Logger, w, []byte(errText), http.StatusInternalServerError)
 		return
 	}
+	if actor == nil {
+		errText := fmt.Sprintf(`{"message": "actor with ID %d is not found"}`, actorIDInt)
+		delivery.WriteResponse(ah.Logger, w, []byte(errText), http.StatusNotFound)
+		return
+	}
 	actorJSON, err := json.Marshal(actor)
 	if err != nil {
 		errText := fmt.Sprintf(`{"message": "error in coding actor: %s"}`, err)

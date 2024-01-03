@@ -19,3 +19,5 @@ genre country  producer
 13. POST /films/favourite/{FILM_ID} - добавить фильм в избранное
 14. GET /review/{FILM_ID} - получение отзывов о фильме
 15. DELETE /films/favourite/{FILM_ID}/{USER_ID}
+16. GET /film/{FILM_ID}/actors список актеров сыгравших в фильме
+17. GET /film/{FILM_ID}/genres список жанров фильма
