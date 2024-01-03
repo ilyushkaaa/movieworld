@@ -60,7 +60,7 @@ func (f *FilmUseCaseStruct) GetFilmsByActor(ID uint64) ([]*entity.Film, error) {
 }
 
 func (f *FilmUseCaseStruct) GetSoonFilms() ([]*entity.Film, error) {
-	currentDate := time.Now()
+	currentDate := time.Now().Format("2006-01-02")
 	films, err := f.FilmRepo.GetSoonFilmsRepo(currentDate)
 	if err != nil {
 		return nil, err

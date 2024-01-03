@@ -6,14 +6,13 @@ import (
 	"go.uber.org/zap"
 	"kinopoisk/app/entity"
 	errorapp "kinopoisk/app/errors"
-	"time"
 )
 
 type FilmRepo interface {
 	GetFilmsRepo(genre, country, producer string) ([]*entity.Film, error)
 	GetFilmByIDRepo(filmID uint64) (*entity.Film, error)
 	GetFilmsByActorRepo(ID uint64) ([]*entity.Film, error)
-	GetSoonFilmsRepo(date time.Time) ([]*entity.Film, error)
+	GetSoonFilmsRepo(date string) ([]*entity.Film, error)
 	GetFavouriteFilmsRepo(userID uint64) ([]*entity.Film, error)
 	AddFavouriteFilmRepo(userID, filmID uint64) (bool, error)
 	DeleteFavouriteFilmRepo(userID, filmID uint64) (bool, error)
@@ -117,9 +116,9 @@ FROM films f INNER JOIN actor_films af ON f.id = af.film_id INNER JOIN actors a 
 	return films, nil
 }
 
-func (r *FilmRepoMySQL) GetSoonFilmsRepo(date time.Time) ([]*entity.Film, error) {
+func (r *FilmRepoMySQL) GetSoonFilmsRepo(date string) ([]*entity.Film, error) {
 	films := []*entity.Film{}
-	rows, err := r.db.Query("SELECT id, name, description, duration, min_age, country, producer_name, date_of_release FROM films WHERE date_of_release > ?", date.Format("2006-01-02"))
+	rows, err := r.db.Query("SELECT id, name, description, duration, min_age, country, producer_name, date_of_release FROM films WHERE date_of_release > ?", date)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil

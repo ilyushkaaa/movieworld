@@ -1,2 +1,5 @@
 .idea
 .env
+app/delivery/handlers/cover.out
+app/delivery/handlers/cover.html
+
