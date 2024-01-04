@@ -36,17 +36,13 @@ func (uh *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 	loggedInUser, err := uh.UserUseCases.Login(userFromLoginForm.Username, userFromLoginForm.Password)
 
-	if errors.Is(err, errorapp.ErrorNoUser) {
-		delivery.WriteResponse(uh.Logger, w, []byte(`{"message": "user not found"}`), http.StatusUnauthorized)
-		return
-	}
-	if errors.Is(err, errorapp.ErrorBadPassword) {
-		delivery.WriteResponse(uh.Logger, w, []byte(`{"message": "invalid password"}`), http.StatusUnauthorized)
-		return
-	}
 	if err != nil {
 		errText := fmt.Sprintf(`{"message": "error in getting user by login and password: %s"}`, err)
 		delivery.WriteResponse(uh.Logger, w, []byte(errText), http.StatusInternalServerError)
+		return
+	}
+	if loggedInUser == nil {
+		delivery.WriteResponse(uh.Logger, w, []byte(`{"message": "bad username or password"}`), http.StatusUnauthorized)
 		return
 	}
 	uh.HandleGetToken(w, loggedInUser)
