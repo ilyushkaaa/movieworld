@@ -5,7 +5,6 @@ import (
 	"kinopoisk/app/entity"
 	errorapp "kinopoisk/app/errors"
 	auth "kinopoisk/service_auth/proto"
-	"sync"
 )
 
 type UserUseCase interface {
@@ -18,13 +17,11 @@ type UserUseCase interface {
 
 type AuthGRPCClient struct {
 	grpcClient auth.AuthMakerClient
-	mu         *sync.RWMutex
 }
 
 func NewAuthGRPCClient(grpcClient auth.AuthMakerClient) *AuthGRPCClient {
 	return &AuthGRPCClient{
 		grpcClient: grpcClient,
-		mu:         &sync.RWMutex{},
 	}
 }
 
@@ -37,7 +34,6 @@ func (a *AuthGRPCClient) Login(username, password string) (*entity.User, error) 
 		return nil, err
 	}
 	if loggedInUser == nil {
-		newUser
 		return nil, nil
 	}
 	newUserApp := getUserFromGRPCStruct(loggedInUser)

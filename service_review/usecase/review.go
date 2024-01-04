@@ -6,18 +6,21 @@ import (
 	errorreview "kinopoisk/service_review/error"
 	review "kinopoisk/service_review/proto"
 	reviewservicerepo "kinopoisk/service_review/repo/mysql"
+	"sync"
 )
 
 type ReviewGRPCServer struct {
 	review.UnimplementedReviewMakerServer
 
 	ReviewRepo reviewservicerepo.ReviewRepo
+	mu         *sync.RWMutex
 }
 
 func NewReviewGRPCServer(reviewRepo reviewservicerepo.ReviewRepo) *ReviewGRPCServer {
 	return &ReviewGRPCServer{
 		UnimplementedReviewMakerServer: review.UnimplementedReviewMakerServer{},
 		ReviewRepo:                     reviewRepo,
+		mu:                             &sync.RWMutex{},
 	}
 }
 
@@ -43,34 +46,37 @@ func (rs *ReviewGRPCServer) NewReview(_ context.Context, in *review.NewReviewDat
 	if err != nil {
 		return nil, err
 	}
+	rs.ReviewRepo.ChangeRatingAddReview(newReview, in.Review.ID.ID)
 	return newReview, nil
 }
 
-func (rs *ReviewGRPCServer) DeleteReview(_ context.Context, in *review.DeleteReviewData) (*review.IsDeleted, error) {
-	id, err := rs.ReviewRepo.GetUserReviewByID(in.ReviewID.ID, in.UserID.ID)
+func (rs *ReviewGRPCServer) DeleteReview(_ context.Context, in *review.DeleteReviewData) (*review.DeletedData, error) {
+	rev, err := rs.ReviewRepo.GetUserReviewByID(in.ReviewID.ID, in.UserID.ID)
 	if errors.Is(err, errorreview.ErrorNoReview) {
-		return &review.IsDeleted{
+		return &review.DeletedData{
 			IsDeleted: false,
 		}, nil
 	}
 	if err != nil {
-		return &review.IsDeleted{
+		return &review.DeletedData{
 			IsDeleted: false,
 		}, err
 	}
-	isDeleted, err := rs.ReviewRepo.DeleteReviewRepo(id)
+	isDeleted, err := rs.ReviewRepo.DeleteReviewRepo(rev.ID.ID)
 	if err != nil {
-		return &review.IsDeleted{
+		return &review.DeletedData{
 			IsDeleted: false,
 		}, err
 	}
-	return &review.IsDeleted{
+	rs.ReviewRepo.ChangeRatingAfterDeleteReview(rev, in.ReviewID.ID)
+	return &review.DeletedData{
 		IsDeleted: isDeleted,
+		Review:    rev,
 	}, nil
 }
 
 func (rs *ReviewGRPCServer) UpdateReview(_ context.Context, in *review.UpdateReviewData) (*review.Review, error) {
-	_, err := rs.ReviewRepo.GetUserReviewByID(in.Review.ID.ID, in.UserID.ID)
+	oldReview, err := rs.ReviewRepo.GetUserReviewByID(in.Review.ID.ID, in.UserID.ID)
 	if errors.Is(err, errorreview.ErrorNoReview) {
 		return nil, nil
 	}
@@ -81,5 +87,6 @@ func (rs *ReviewGRPCServer) UpdateReview(_ context.Context, in *review.UpdateRev
 	if err != nil {
 		return nil, err
 	}
+	rs.ReviewRepo.ChangeRatingAfterUpdateReview(oldReview, updatedReview, in.Review.ID.ID)
 	return updatedReview, nil
 }

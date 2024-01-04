@@ -14,8 +14,10 @@ CREATE TABLE IF NOT EXISTS films
     min_age INTEGER NOT NULL,
     country varchar(255) NOT NULL,
     producer_name varchar(255) NOT NULL,
-    date_of_release DATE NOT NULL
-
+    date_of_release DATE NOT NULL,
+    sum_mark      INTEGER NOT NULL,
+    num_of_marks    INTEGER NOT NULL,
+    rating        DECIMAL(3, 1) NOT NULL,
 );
 
 CREATE TABLE IF NOT EXISTS actors

@@ -7,7 +7,6 @@ import (
 	errorapp "kinopoisk/app/errors"
 	filmrepo "kinopoisk/app/films/repo/mysql"
 	review "kinopoisk/service_review/proto"
-	"sync"
 )
 
 type ReviewUseCase interface {
@@ -18,7 +17,6 @@ type ReviewUseCase interface {
 }
 
 type ReviewGRPCClient struct {
-	mu         *sync.RWMutex
 	grpcClient review.ReviewMakerClient
 	filmRepo   filmrepo.FilmRepo
 }
@@ -27,7 +25,6 @@ func NewReviewGRPCClient(grpcClient review.ReviewMakerClient, filmRepo filmrepo.
 	return &ReviewGRPCClient{
 		grpcClient: grpcClient,
 		filmRepo:   filmRepo,
-		mu:         &sync.RWMutex{},
 	}
 }
 
@@ -68,18 +65,22 @@ func (r *ReviewGRPCClient) NewReview(newReview *dto.ReviewDTO, filmID uint64, us
 	}
 	reviewApp := getReviewFromGRPCStruct(newReviewGRPC)
 	reviewApp.Author = user
+
 	return reviewApp, nil
 }
 
 func (r *ReviewGRPCClient) DeleteReview(reviewID, userID uint64) (bool, error) {
-	isDeletedGRPC, err := r.grpcClient.DeleteReview(context.Background(), &review.DeleteReviewData{
+	deletedData, err := r.grpcClient.DeleteReview(context.Background(), &review.DeleteReviewData{
 		ReviewID: &review.ReviewID{ID: reviewID},
 		UserID:   &review.UserID{ID: userID},
 	})
 	if err != nil {
 		return false, err
 	}
-	return isDeletedGRPC.IsDeleted, nil
+	if deletedData.IsDeleted {
+
+	}
+	return deletedData.IsDeleted, nil
 }
 
 func (r *ReviewGRPCClient) UpdateReview(reviewToUpdate *dto.ReviewDTO, reviewID uint64, user *entity.User) (*entity.Review, error) {
@@ -96,7 +97,6 @@ func (r *ReviewGRPCClient) UpdateReview(reviewToUpdate *dto.ReviewDTO, reviewID 
 	}
 	updatedReviewApp := getReviewFromGRPCStruct(updatedReviewGRPC)
 	updatedReviewApp.Author = user
-
 	return updatedReviewApp, nil
 }
 

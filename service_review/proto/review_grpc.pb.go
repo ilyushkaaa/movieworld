@@ -20,7 +20,7 @@ const _ = grpc.SupportPackageIsVersion7
 type ReviewMakerClient interface {
 	GetFilmReviews(ctx context.Context, in *FilmID, opts ...grpc.CallOption) (*Reviews, error)
 	NewReview(ctx context.Context, in *NewReviewData, opts ...grpc.CallOption) (*Review, error)
-	DeleteReview(ctx context.Context, in *DeleteReviewData, opts ...grpc.CallOption) (*IsDeleted, error)
+	DeleteReview(ctx context.Context, in *DeleteReviewData, opts ...grpc.CallOption) (*DeletedData, error)
 	UpdateReview(ctx context.Context, in *UpdateReviewData, opts ...grpc.CallOption) (*Review, error)
 }
 
@@ -50,8 +50,8 @@ func (c *reviewMakerClient) NewReview(ctx context.Context, in *NewReviewData, op
 	return out, nil
 }
 
-func (c *reviewMakerClient) DeleteReview(ctx context.Context, in *DeleteReviewData, opts ...grpc.CallOption) (*IsDeleted, error) {
-	out := new(IsDeleted)
+func (c *reviewMakerClient) DeleteReview(ctx context.Context, in *DeleteReviewData, opts ...grpc.CallOption) (*DeletedData, error) {
+	out := new(DeletedData)
 	err := c.cc.Invoke(ctx, "/review.ReviewMaker/DeleteReview", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -74,7 +74,7 @@ func (c *reviewMakerClient) UpdateReview(ctx context.Context, in *UpdateReviewDa
 type ReviewMakerServer interface {
 	GetFilmReviews(context.Context, *FilmID) (*Reviews, error)
 	NewReview(context.Context, *NewReviewData) (*Review, error)
-	DeleteReview(context.Context, *DeleteReviewData) (*IsDeleted, error)
+	DeleteReview(context.Context, *DeleteReviewData) (*DeletedData, error)
 	UpdateReview(context.Context, *UpdateReviewData) (*Review, error)
 	mustEmbedUnimplementedReviewMakerServer()
 }
@@ -89,7 +89,7 @@ func (UnimplementedReviewMakerServer) GetFilmReviews(context.Context, *FilmID) (
 func (UnimplementedReviewMakerServer) NewReview(context.Context, *NewReviewData) (*Review, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method NewReview not implemented")
 }
-func (UnimplementedReviewMakerServer) DeleteReview(context.Context, *DeleteReviewData) (*IsDeleted, error) {
+func (UnimplementedReviewMakerServer) DeleteReview(context.Context, *DeleteReviewData) (*DeletedData, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteReview not implemented")
 }
 func (UnimplementedReviewMakerServer) UpdateReview(context.Context, *UpdateReviewData) (*Review, error) {

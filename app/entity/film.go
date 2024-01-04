@@ -11,4 +11,7 @@ type Film struct {
 	Country       string
 	ProducerName  string
 	DateOfRelease time.Time
+	SumMark       uint64
+	NumOfMarks    uint64
+	Rating        float64
 }

@@ -22,8 +22,9 @@ message ReviewID {
   uint64 ID = 1;
 }
 
-message IsDeleted {
+message DeletedData {
   bool isDeleted = 1;
+  Review review = 2;
 }
 
 message Review {
@@ -56,6 +57,6 @@ message UpdateReviewData {
 service ReviewMaker {
   rpc GetFilmReviews (FilmID) returns (Reviews);
   rpc NewReview (NewReviewData) returns (Review);
-  rpc DeleteReview (DeleteReviewData) returns (IsDeleted);
+  rpc DeleteReview (DeleteReviewData) returns (DeletedData);
   rpc UpdateReview (UpdateReviewData) returns (Review);
 }

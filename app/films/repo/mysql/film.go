@@ -35,7 +35,7 @@ func NewActorRepoMySQL(db *sql.DB, logger *zap.SugaredLogger) *FilmRepoMySQL {
 
 func (r *FilmRepoMySQL) GetFilmsRepo(genre, country, producer string) ([]*entity.Film, error) {
 	var args []interface{}
-	query := "SELECT f.id, f.name, f.description, f.duration, f.min_age, f.country, f.producer_name, f.date_of_release from films f"
+	query := "SELECT f.id, f.name, f.description, f.duration, f.min_age, f.country, f.producer_name, f.date_of_release, f.num_of_marks, f.rating from films f"
 	if genre != "" {
 		query += " INNER JOIN film_genres fg ON f.id = fg.film_id INNER JOIN genres g ON g.id = fg.genre_id WHERE g.name = ?"
 		args = append(args, genre)
@@ -67,7 +67,7 @@ func (r *FilmRepoMySQL) GetFilmsRepo(genre, country, producer string) ([]*entity
 	for rows.Next() {
 		film := &entity.Film{}
 		err = rows.Scan(&film.ID, &film.Name, &film.Description, &film.Duration, &film.MinAge, &film.Country,
-			&film.ProducerName, film.DateOfRelease)
+			&film.ProducerName, film.DateOfRelease, &film.NumOfMarks, &film.Rating)
 		if err != nil {
 			return nil, err
 		}
@@ -79,8 +79,8 @@ func (r *FilmRepoMySQL) GetFilmsRepo(genre, country, producer string) ([]*entity
 func (r *FilmRepoMySQL) GetFilmByIDRepo(filmID uint64) (*entity.Film, error) {
 	film := &entity.Film{}
 	err := r.db.
-		QueryRow("SELECT id, name, description, duration, min_age, country, producer_name, date_of_release FROM films WHERE id = ?", filmID).
-		Scan(&film.ID, &film.Name, &film.Description, &film.Duration, &film.MinAge, &film.Country, &film.ProducerName, &film.DateOfRelease)
+		QueryRow("SELECT id, name, description, duration, min_age, country, producer_name, date_of_release, num_of_marks, rating FROM films WHERE id = ?", filmID).
+		Scan(&film.ID, &film.Name, &film.Description, &film.Duration, &film.MinAge, &film.Country, &film.ProducerName, &film.DateOfRelease, &film.NumOfMarks, &film.Rating)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
@@ -92,7 +92,7 @@ func (r *FilmRepoMySQL) GetFilmByIDRepo(filmID uint64) (*entity.Film, error) {
 
 func (r *FilmRepoMySQL) GetFilmsByActorRepo(ID uint64) ([]*entity.Film, error) {
 	films := []*entity.Film{}
-	rows, err := r.db.Query(`SELECT f.id, f.name, f.description, f.duration, f.min_age, f.country, f.producer_name, f.date_of_release 
+	rows, err := r.db.Query(`SELECT f.id, f.name, f.description, f.duration, f.min_age, f.country, f.producer_name, f.date_of_release, f.num_of_marks, f.rating
 FROM films f INNER JOIN actor_films af ON f.id = af.film_id INNER JOIN actors a ON a.id = af.actor_id WHERE a.id = ?`, ID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -108,7 +108,7 @@ FROM films f INNER JOIN actor_films af ON f.id = af.film_id INNER JOIN actors a 
 	}(rows)
 	for rows.Next() {
 		film := &entity.Film{}
-		err = rows.Scan(&film.ID, &film.Name, &film.Description, &film.Duration, &film.MinAge, &film.Country, &film.ProducerName, &film.DateOfRelease)
+		err = rows.Scan(&film.ID, &film.Name, &film.Description, &film.Duration, &film.MinAge, &film.Country, &film.ProducerName, &film.DateOfRelease, &film.NumOfMarks, &film.Rating)
 		if err != nil {
 			return nil, err
 		}
@@ -119,7 +119,7 @@ FROM films f INNER JOIN actor_films af ON f.id = af.film_id INNER JOIN actors a 
 
 func (r *FilmRepoMySQL) GetSoonFilmsRepo(date string) ([]*entity.Film, error) {
 	films := []*entity.Film{}
-	rows, err := r.db.Query("SELECT id, name, description, duration, min_age, country, producer_name, date_of_release FROM films WHERE date_of_release > ?", date)
+	rows, err := r.db.Query("SELECT id, name, description, duration, min_age, country, producer_name, date_of_release, num_of_marks, rating FROM films WHERE date_of_release > ?", date)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
@@ -134,7 +134,7 @@ func (r *FilmRepoMySQL) GetSoonFilmsRepo(date string) ([]*entity.Film, error) {
 	}(rows)
 	for rows.Next() {
 		film := &entity.Film{}
-		err = rows.Scan(&film.ID, &film.Name, &film.Description, &film.Duration, &film.MinAge, &film.Country, &film.ProducerName, &film.DateOfRelease)
+		err = rows.Scan(&film.ID, &film.Name, &film.Description, &film.Duration, &film.MinAge, &film.Country, &film.ProducerName, &film.DateOfRelease, &film.NumOfMarks, &film.Rating)
 		if err != nil {
 			return nil, err
 		}
@@ -145,7 +145,7 @@ func (r *FilmRepoMySQL) GetSoonFilmsRepo(date string) ([]*entity.Film, error) {
 
 func (r *FilmRepoMySQL) GetFavouriteFilmsRepo(userID uint64) ([]*entity.Film, error) {
 	films := []*entity.Film{}
-	rows, err := r.db.Query("SELECT f.id, f.name, f.description, f.duration, f.min_age, f.country, f.producer_name, f.date_of_release FROM films f JOIN favourite_films ff on f.id = ff.film_id WHERE ff.user_id = ?", userID)
+	rows, err := r.db.Query("SELECT f.id, f.name, f.description, f.duration, f.min_age, f.country, f.producer_name, f.date_of_release, f.num_of_marks, f.rating FROM films f JOIN favourite_films ff on f.id = ff.film_id WHERE ff.user_id = ?", userID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
@@ -160,7 +160,7 @@ func (r *FilmRepoMySQL) GetFavouriteFilmsRepo(userID uint64) ([]*entity.Film, er
 	}(rows)
 	for rows.Next() {
 		film := &entity.Film{}
-		err = rows.Scan(&film.ID, &film.Name, &film.Description, &film.Duration, &film.MinAge, &film.Country, &film.ProducerName, &film.DateOfRelease)
+		err = rows.Scan(&film.ID, &film.Name, &film.Description, &film.Duration, &film.MinAge, &film.Country, &film.ProducerName, &film.DateOfRelease, &film.NumOfMarks, &film.Rating)
 		if err != nil {
 			return nil, err
 		}
