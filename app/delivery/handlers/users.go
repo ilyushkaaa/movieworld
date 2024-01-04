@@ -127,10 +127,15 @@ func (uh *UserHandler) Logout(w http.ResponseWriter, r *http.Request) {
 		delivery.WriteResponse(uh.Logger, w, []byte(`{"message": "can not cast context value to user"}`), http.StatusInternalServerError)
 		return
 	}
-	err := uh.UserUseCases.DeleteSession(token)
+	isDeleted, err := uh.UserUseCases.DeleteSession(token)
 	if err != nil {
 		errText := fmt.Sprintf(`{"message": "error in logging out: %s"}`, err)
 		delivery.WriteResponse(uh.Logger, w, []byte(errText), http.StatusInternalServerError)
+		return
+	}
+	if !isDeleted {
+		errText := fmt.Sprintf(`{"message": "no session with token: %s"}`, token)
+		delivery.WriteResponse(uh.Logger, w, []byte(errText), http.StatusNotFound)
 		return
 	}
 	message := `{"result":"success"}`

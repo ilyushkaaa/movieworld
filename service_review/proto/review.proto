@@ -1,0 +1,54 @@
+syntax = "proto3";
+
+option go_package = "./;review";
+
+package review;
+
+message UserID {
+  uint64 ID = 1;
+}
+
+message FilmID {
+  uint64 ID = 1;
+}
+
+message ReviewID {
+  uint64 ID = 1;
+}
+
+message IsDeleted {
+  bool isDeleted = 1;
+}
+
+message Review {
+  ReviewID ID = 1;
+  uint32 mark = 2;
+  string comment = 3;
+}
+
+message Reviews {
+  repeated Review reviews = 1;
+}
+
+message NewReviewData {
+  Review review = 1;
+  FilmID filmID = 2;
+  UserID userID = 3;
+}
+
+message DeleteReviewData {
+  ReviewID reviewID = 1;
+  UserID userID = 2;
+}
+
+message UpdateReviewData {
+  Review review = 1;
+  UserID userID = 2;
+}
+
+service ReviewMaker {
+  rpc GetFilmReviews (FilmID) returns (Reviews);
+  rpc NewReview (NewReviewData) returns (Review);
+  rpc DeleteReview (DeleteReviewData) returns (IsDeleted);
+  rpc UpdateReview (UpdateReviewData) returns (Review);
+}
