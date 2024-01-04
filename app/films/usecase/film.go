@@ -1,6 +1,7 @@
 package filmusecase
 
 import (
+	"errors"
 	"kinopoisk/app/entity"
 	errorapp "kinopoisk/app/errors"
 	filmrepo "kinopoisk/app/films/repo/mysql"
@@ -84,6 +85,13 @@ func (f *FilmUseCaseStruct) AddFavouriteFilm(userID, filmID uint64) (bool, error
 	if film == nil {
 		return false, errorapp.ErrorNoFilm
 	}
+	_, err = f.FilmRepo.GetFilmInFavourites(filmID, userID)
+	if errors.Is(err, errorapp.ErrorNoFilm) {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
 	wasAdded, err := f.FilmRepo.AddFavouriteFilmRepo(userID, filmID)
 	if err != nil {
 		return false, err
@@ -92,7 +100,14 @@ func (f *FilmUseCaseStruct) AddFavouriteFilm(userID, filmID uint64) (bool, error
 }
 
 func (f *FilmUseCaseStruct) DeleteFavouriteFilm(userID, filmID uint64) (bool, error) {
-	wasDeleted, err := f.FilmRepo.DeleteFavouriteFilmRepo(userID, filmID)
+	ID, err := f.FilmRepo.GetFilmInFavourites(filmID, userID)
+	if errors.Is(err, errorapp.ErrorNoFilm) {
+		return false, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	wasDeleted, err := f.FilmRepo.DeleteFavouriteFilmRepo(ID)
 	if err != nil {
 		return false, err
 	}

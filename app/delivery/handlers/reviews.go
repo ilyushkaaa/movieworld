@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
@@ -9,6 +10,7 @@ import (
 	"kinopoisk/app/delivery"
 	"kinopoisk/app/dto"
 	"kinopoisk/app/entity"
+	errorapp "kinopoisk/app/errors"
 	"kinopoisk/app/middleware"
 	reviewusecase "kinopoisk/app/reviews/usecase"
 	"net/http"
@@ -92,9 +94,19 @@ func (rh *ReviewHandler) AddReview(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	addedReview, err := rh.ReviewUseCases.NewReview(reviewDTO, filmIDInt, user.ID)
+	if errors.Is(err, errorapp.ErrorNoFilm) {
+		errText := fmt.Sprintf(`{"message": "no film with id: %d"}`, filmIDInt)
+		delivery.WriteResponse(rh.Logger, w, []byte(errText), http.StatusNotFound)
+		return
+	}
 	if err != nil {
 		errText := fmt.Sprintf(`{"message": "internal server error: %s"}`, err)
 		delivery.WriteResponse(rh.Logger, w, []byte(errText), http.StatusInternalServerError)
+		return
+	}
+	if addedReview == nil {
+		errText := fmt.Sprintf(`{"message": "film with id %d has been already reviewed"}`, filmIDInt)
+		delivery.WriteResponse(rh.Logger, w, []byte(errText), http.StatusBadRequest)
 		return
 	}
 	reviewJSON, err := json.Marshal(addedReview)

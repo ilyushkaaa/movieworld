@@ -11,7 +11,7 @@ type (
 		Token string `json:"token"`
 	}
 	ReviewDTO struct {
-		Mark    uint8  `valid:"int,range(1:10)"`
+		Mark    uint32 `valid:"int,range(1:10)"`
 		Comment string `valid:"optional,length(10|10000)"`
 	}
 )

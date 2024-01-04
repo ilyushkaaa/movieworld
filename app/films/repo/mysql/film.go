@@ -15,9 +15,10 @@ type FilmRepo interface {
 	GetSoonFilmsRepo(date string) ([]*entity.Film, error)
 	GetFavouriteFilmsRepo(userID uint64) ([]*entity.Film, error)
 	AddFavouriteFilmRepo(userID, filmID uint64) (bool, error)
-	DeleteFavouriteFilmRepo(userID, filmID uint64) (bool, error)
+	DeleteFavouriteFilmRepo(ID uint64) (bool, error)
 	GetFilmActorsRepo(filmID uint64) ([]*entity.Actor, error)
 	GetFilmGenresRepo(filmID uint64) ([]*entity.Genre, error)
+	GetFilmInFavourites(filmID, userID uint64) (uint64, error)
 }
 
 type FilmRepoMySQL struct {
@@ -169,50 +170,21 @@ func (r *FilmRepoMySQL) GetFavouriteFilmsRepo(userID uint64) ([]*entity.Film, er
 }
 
 func (r *FilmRepoMySQL) AddFavouriteFilmRepo(userID, filmID uint64) (bool, error) {
-	err := r.db.
-		QueryRow("SELECT id from films WHERE id = ?", filmID).
-		Scan(&filmID)
-	if errors.Is(err, sql.ErrNoRows) {
-		return false, errorapp.ErrorNoFilm
-	}
+	_, err := r.db.Exec(
+		"INSERT INTO favourite_films (`user_id`, `film_id`) VALUES (?, ?)",
+		userID,
+		filmID,
+	)
 	if err != nil {
 		return false, err
 	}
-	var id int
-	err = r.db.
-		QueryRow("SELECT id from favourite_films WHERE user_id = ? AND film_id = ?", userID, filmID).
-		Scan(&id)
-	if err != nil {
-		if !errors.Is(err, sql.ErrNoRows) {
-			return false, err
-		}
-		_, err = r.db.Exec(
-			"INSERT INTO favourite_films (`user_id`, `film_id`) VALUES (?, ?)",
-			userID,
-			filmID,
-		)
-		if err != nil {
-			return false, err
-		}
-		return true, nil
-	}
-	return false, nil
+	return true, nil
 }
 
-func (r *FilmRepoMySQL) DeleteFavouriteFilmRepo(userID, filmID uint64) (bool, error) {
-	var id int
-	err := r.db.
-		QueryRow("SELECT id from favourite_films WHERE user_id = ? AND film_id = ?", userID, filmID).
-		Scan(&id)
-	if errors.Is(err, sql.ErrNoRows) {
-		return false, nil
-	}
-	if err != nil {
-		return false, err
-	}
-	_, err = r.db.Exec(
+func (r *FilmRepoMySQL) DeleteFavouriteFilmRepo(ID uint64) (bool, error) {
+	_, err := r.db.Exec(
 		"DELETE FROM favourite_films WHERE id = ?",
-		id,
+		ID,
 	)
 	if err != nil {
 		return false, err
@@ -264,4 +236,18 @@ func (r *FilmRepoMySQL) GetFilmGenresRepo(filmID uint64) ([]*entity.Genre, error
 		genres = append(genres, genre)
 	}
 	return genres, nil
+}
+
+func (r *FilmRepoMySQL) GetFilmInFavourites(filmID, userID uint64) (uint64, error) {
+	var id uint64
+	err := r.db.
+		QueryRow("SELECT id from favourite_films WHERE user_id = ? AND film_id = ?", userID, filmID).
+		Scan(&id)
+	if errors.Is(err, sql.ErrNoRows) {
+		return 0, errorapp.ErrorNoFilm
+	}
+	if err != nil {
+		return 0, err
+	}
+	return id, nil
 }

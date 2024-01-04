@@ -3,7 +3,6 @@ package userusecase
 import (
 	"kinopoisk/app/entity"
 	auth "kinopoisk/service_auth/proto"
-	"sync"
 )
 
 type UserUseCase interface {
@@ -15,13 +14,11 @@ type UserUseCase interface {
 }
 
 type AuthGRPCClient struct {
-	mu         *sync.RWMutex
 	grpcClient auth.AuthMakerClient
 }
 
 func NewAuthGRPCClient(grpcClient auth.AuthMakerClient) *AuthGRPCClient {
 	return &AuthGRPCClient{
-		mu:         &sync.RWMutex{},
 		grpcClient: grpcClient,
 	}
 }
