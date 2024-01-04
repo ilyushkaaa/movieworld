@@ -4,8 +4,14 @@ option go_package = "./;review";
 
 package review;
 
+
 message UserID {
   uint64 ID = 1;
+}
+
+message User {
+  UserID ID = 1;
+  string username = 2;
 }
 
 message FilmID {
@@ -24,6 +30,7 @@ message Review {
   ReviewID ID = 1;
   uint32 mark = 2;
   string comment = 3;
+  User author = 4;
 }
 
 message Reviews {

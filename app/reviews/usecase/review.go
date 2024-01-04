@@ -12,9 +12,9 @@ import (
 
 type ReviewUseCase interface {
 	GetFilmReviews(filmID uint64) ([]*entity.Review, error)
-	NewReview(newReview *dto.ReviewDTO, filmID, userID uint64) (*entity.Review, error)
+	NewReview(newReview *dto.ReviewDTO, filmID uint64, user *entity.User) (*entity.Review, error)
 	DeleteReview(reviewID, userID uint64) (bool, error)
-	UpdateReview(reviewToUpdate *dto.ReviewDTO, reviewID, userID uint64) (*entity.Review, error)
+	UpdateReview(reviewToUpdate *dto.ReviewDTO, reviewID uint64, user *entity.User) (*entity.Review, error)
 }
 
 type ReviewGRPCClient struct {
@@ -47,7 +47,7 @@ func (r *ReviewGRPCClient) GetFilmReviews(filmID uint64) ([]*entity.Review, erro
 	return reviewsApp, nil
 }
 
-func (r *ReviewGRPCClient) NewReview(newReview *dto.ReviewDTO, filmID, userID uint64) (*entity.Review, error) {
+func (r *ReviewGRPCClient) NewReview(newReview *dto.ReviewDTO, filmID uint64, user *entity.User) (*entity.Review, error) {
 	film, err := r.filmRepo.GetFilmByIDRepo(filmID)
 	if err != nil {
 		return nil, err
@@ -58,7 +58,7 @@ func (r *ReviewGRPCClient) NewReview(newReview *dto.ReviewDTO, filmID, userID ui
 	newReviewGRPC, err := r.grpcClient.NewReview(context.Background(), &review.NewReviewData{
 		Review: getGRPCReviewFromDTO(newReview),
 		FilmID: &review.FilmID{ID: filmID},
-		UserID: &review.UserID{ID: userID},
+		UserID: &review.UserID{ID: user.ID},
 	})
 	if err != nil {
 		return nil, err
@@ -67,6 +67,7 @@ func (r *ReviewGRPCClient) NewReview(newReview *dto.ReviewDTO, filmID, userID ui
 		return nil, nil
 	}
 	reviewApp := getReviewFromGRPCStruct(newReviewGRPC)
+	reviewApp.Author = user
 	return reviewApp, nil
 }
 
@@ -81,19 +82,21 @@ func (r *ReviewGRPCClient) DeleteReview(reviewID, userID uint64) (bool, error) {
 	return isDeletedGRPC.IsDeleted, nil
 }
 
-func (r *ReviewGRPCClient) UpdateReview(reviewToUpdate *dto.ReviewDTO, reviewID, userID uint64) (*entity.Review, error) {
+func (r *ReviewGRPCClient) UpdateReview(reviewToUpdate *dto.ReviewDTO, reviewID uint64, user *entity.User) (*entity.Review, error) {
 	grpcReview := getGRPCReviewFromDTO(reviewToUpdate)
 	grpcReview.ID = &review.ReviewID{
 		ID: reviewID,
 	}
 	updatedReviewGRPC, err := r.grpcClient.UpdateReview(context.Background(), &review.UpdateReviewData{
 		Review: grpcReview,
-		UserID: &review.UserID{ID: userID},
+		UserID: &review.UserID{ID: user.ID},
 	})
 	if err != nil {
 		return nil, err
 	}
 	updatedReviewApp := getReviewFromGRPCStruct(updatedReviewGRPC)
+	updatedReviewApp.Author = user
+
 	return updatedReviewApp, nil
 }
 
@@ -102,6 +105,10 @@ func getReviewFromGRPCStruct(reviewGRPC *review.Review) *entity.Review {
 		ID:      reviewGRPC.ID.ID,
 		Mark:    reviewGRPC.Mark,
 		Comment: reviewGRPC.Comment,
+		Author: &entity.User{
+			ID:       reviewGRPC.Author.ID.ID,
+			Username: reviewGRPC.Author.Username,
+		},
 	}
 }
 

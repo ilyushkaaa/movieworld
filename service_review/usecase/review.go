@@ -33,7 +33,7 @@ func (rs *ReviewGRPCServer) GetFilmReviews(_ context.Context, in *review.FilmID)
 
 func (rs *ReviewGRPCServer) NewReview(_ context.Context, in *review.NewReviewData) (*review.Review, error) {
 	_, err := rs.ReviewRepo.GetReviewByFilmUser(in.GetFilmID().ID, in.GetUserID().ID)
-	if errors.Is(err, errorreview.ErrorNoFilm) {
+	if errors.Is(err, errorreview.ErrorNoReview) {
 		return nil, nil
 	}
 	if err != nil {

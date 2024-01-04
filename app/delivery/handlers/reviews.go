@@ -93,7 +93,7 @@ func (rh *ReviewHandler) AddReview(w http.ResponseWriter, r *http.Request) {
 		delivery.WriteResponse(rh.Logger, w, errorsJSON, http.StatusUnprocessableEntity)
 		return
 	}
-	addedReview, err := rh.ReviewUseCases.NewReview(reviewDTO, filmIDInt, user.ID)
+	addedReview, err := rh.ReviewUseCases.NewReview(reviewDTO, filmIDInt, user)
 	if errors.Is(err, errorapp.ErrorNoFilm) {
 		errText := fmt.Sprintf(`{"message": "no film with id: %d"}`, filmIDInt)
 		delivery.WriteResponse(rh.Logger, w, []byte(errText), http.StatusNotFound)
@@ -187,7 +187,7 @@ func (rh *ReviewHandler) UpdateReview(w http.ResponseWriter, r *http.Request) {
 		delivery.WriteResponse(rh.Logger, w, errorsJSON, http.StatusUnprocessableEntity)
 		return
 	}
-	updatedReview, err := rh.ReviewUseCases.UpdateReview(reviewDTO, reviewIDInt, user.ID)
+	updatedReview, err := rh.ReviewUseCases.UpdateReview(reviewDTO, reviewIDInt, user)
 	if err != nil {
 		errText := fmt.Sprintf(`{"message": "internal server error: %s"}`, err)
 		delivery.WriteResponse(rh.Logger, w, []byte(errText), http.StatusInternalServerError)
