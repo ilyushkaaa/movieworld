@@ -34,7 +34,9 @@ func NewFilmUseCaseStruct(filmRepo filmrepo.FilmRepo) *FilmUseCaseStruct {
 }
 
 func (f *FilmUseCaseStruct) GetFilms(genre, country, producer string) ([]*entity.Film, error) {
+	f.mu.RLock()
 	films, err := f.FilmRepo.GetFilmsRepo(genre, country, producer)
+	f.mu.RUnlock()
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +44,9 @@ func (f *FilmUseCaseStruct) GetFilms(genre, country, producer string) ([]*entity
 }
 
 func (f *FilmUseCaseStruct) GetFilmByID(filmID uint64) (*entity.Film, error) {
+	f.mu.RLock()
 	film, err := f.FilmRepo.GetFilmByIDRepo(filmID)
+	f.mu.RUnlock()
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +57,9 @@ func (f *FilmUseCaseStruct) GetFilmByID(filmID uint64) (*entity.Film, error) {
 }
 
 func (f *FilmUseCaseStruct) GetFilmsByActor(ID uint64) ([]*entity.Film, error) {
+	f.mu.RLock()
 	films, err := f.FilmRepo.GetFilmsByActorRepo(ID)
+	f.mu.RUnlock()
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +67,9 @@ func (f *FilmUseCaseStruct) GetFilmsByActor(ID uint64) ([]*entity.Film, error) {
 }
 
 func (f *FilmUseCaseStruct) GetSoonFilms() ([]*entity.Film, error) {
+	f.mu.RLock()
 	currentDate := time.Now().Format("2006-01-02")
+	f.mu.RUnlock()
 	films, err := f.FilmRepo.GetSoonFilmsRepo(currentDate)
 	if err != nil {
 		return nil, err
@@ -70,7 +78,9 @@ func (f *FilmUseCaseStruct) GetSoonFilms() ([]*entity.Film, error) {
 }
 
 func (f *FilmUseCaseStruct) GetFavouriteFilms(userID uint64) ([]*entity.Film, error) {
+	f.mu.RLock()
 	films, err := f.FilmRepo.GetFavouriteFilmsRepo(userID)
+	f.mu.RUnlock()
 	if err != nil {
 		return nil, err
 	}
@@ -78,21 +88,27 @@ func (f *FilmUseCaseStruct) GetFavouriteFilms(userID uint64) ([]*entity.Film, er
 }
 
 func (f *FilmUseCaseStruct) AddFavouriteFilm(userID, filmID uint64) (bool, error) {
+	f.mu.RLock()
 	film, err := f.FilmRepo.GetFilmByIDRepo(filmID)
+	f.mu.RUnlock()
 	if err != nil {
 		return false, err
 	}
 	if film == nil {
 		return false, errorapp.ErrorNoFilm
 	}
+	f.mu.RLock()
 	_, err = f.FilmRepo.GetFilmInFavourites(filmID, userID)
+	f.mu.RUnlock()
 	if errors.Is(err, errorapp.ErrorNoFilm) {
 		return false, nil
 	}
 	if err != nil {
 		return false, err
 	}
+	f.mu.Lock()
 	wasAdded, err := f.FilmRepo.AddFavouriteFilmRepo(userID, filmID)
+	f.mu.Unlock()
 	if err != nil {
 		return false, err
 	}
@@ -100,14 +116,18 @@ func (f *FilmUseCaseStruct) AddFavouriteFilm(userID, filmID uint64) (bool, error
 }
 
 func (f *FilmUseCaseStruct) DeleteFavouriteFilm(userID, filmID uint64) (bool, error) {
+	f.mu.RLock()
 	ID, err := f.FilmRepo.GetFilmInFavourites(filmID, userID)
+	f.mu.RUnlock()
 	if errors.Is(err, errorapp.ErrorNoFilm) {
 		return false, nil
 	}
 	if err != nil {
 		return false, err
 	}
+	f.mu.Lock()
 	wasDeleted, err := f.FilmRepo.DeleteFavouriteFilmRepo(ID)
+	f.mu.Unlock()
 	if err != nil {
 		return false, err
 	}
@@ -115,14 +135,18 @@ func (f *FilmUseCaseStruct) DeleteFavouriteFilm(userID, filmID uint64) (bool, er
 }
 
 func (f *FilmUseCaseStruct) GetFilmActors(filmID uint64) ([]*entity.Actor, error) {
+	f.mu.RLock()
 	film, err := f.GetFilmByID(filmID)
+	f.mu.RUnlock()
 	if err != nil {
 		return nil, err
 	}
 	if film == nil {
 		return nil, errorapp.ErrorNoFilm
 	}
+	f.mu.RLock()
 	actors, err := f.FilmRepo.GetFilmActorsRepo(filmID)
+	f.mu.RUnlock()
 	if err != nil {
 		return nil, err
 	}
@@ -130,14 +154,18 @@ func (f *FilmUseCaseStruct) GetFilmActors(filmID uint64) ([]*entity.Actor, error
 }
 
 func (f *FilmUseCaseStruct) GetFilmGenres(filmID uint64) ([]*entity.Genre, error) {
+	f.mu.RLock()
 	film, err := f.GetFilmByID(filmID)
+	f.mu.RUnlock()
 	if err != nil {
 		return nil, err
 	}
 	if film == nil {
 		return nil, errorapp.ErrorNoFilm
 	}
+	f.mu.RLock()
 	genres, err := f.FilmRepo.GetFilmGenresRepo(filmID)
+	f.mu.RUnlock()
 	if err != nil {
 		return nil, err
 	}

@@ -24,7 +24,9 @@ func NewActorUseCaseStruct(actorRepo actorrepo.ActorRepo) *ActorUseCaseStruct {
 }
 
 func (a *ActorUseCaseStruct) GetActors() ([]*entity.Actor, error) {
+	a.mu.RLock()
 	actors, err := a.ActorRepo.GetActorsRepo()
+	a.mu.RUnlock()
 	if err != nil {
 		return nil, err
 	}
@@ -32,7 +34,9 @@ func (a *ActorUseCaseStruct) GetActors() ([]*entity.Actor, error) {
 }
 
 func (a *ActorUseCaseStruct) GetActorByID(ID uint64) (*entity.Actor, error) {
+	a.mu.RLock()
 	actor, err := a.ActorRepo.GetActorByIDRepo(ID)
+	a.mu.RUnlock()
 	if err != nil {
 		return nil, err
 	}
