@@ -40,11 +40,13 @@ func (rs *ReviewGRPCServer) NewReview(_ context.Context, in *review.NewReviewDat
 	rs.mu.RLock()
 	_, err := rs.ReviewRepo.GetReviewByFilmUser(in.GetFilmID().ID, in.GetUserID().ID)
 	rs.mu.RUnlock()
-	if errors.Is(err, errorreview.ErrorNoReview) {
+	if err == nil {
 		return nil, nil
 	}
 	if err != nil {
-		return nil, err
+		if !errors.Is(err, errorreview.ErrorNoReview) {
+			return nil, err
+		}
 	}
 	rs.mu.Lock()
 	newReview, err := rs.ReviewRepo.NewReviewRepo(in.GetReview(), in.GetFilmID().ID, in.GetUserID().ID)

@@ -78,7 +78,7 @@ func (rh *ReviewHandler) AddReview(w http.ResponseWriter, r *http.Request) {
 	err = json.Unmarshal(rBody, reviewDTO)
 	if err != nil {
 		errText := fmt.Sprintf(`{"message": "error in decoding posts: %s"}`, err)
-		delivery.WriteResponse(rh.Logger, w, []byte(errText), http.StatusInternalServerError)
+		delivery.WriteResponse(rh.Logger, w, []byte(errText), http.StatusBadRequest)
 		return
 	}
 
@@ -173,7 +173,7 @@ func (rh *ReviewHandler) UpdateReview(w http.ResponseWriter, r *http.Request) {
 	err = json.Unmarshal(rBody, reviewDTO)
 	if err != nil {
 		errText := fmt.Sprintf(`{"message": "error in decoding posts: %s"}`, err)
-		delivery.WriteResponse(rh.Logger, w, []byte(errText), http.StatusInternalServerError)
+		delivery.WriteResponse(rh.Logger, w, []byte(errText), http.StatusBadRequest)
 		return
 	}
 	if validationErrors := reviewDTO.Validate(); len(validationErrors) != 0 {

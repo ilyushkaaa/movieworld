@@ -30,8 +30,6 @@ func NewUserHandler(userUseCases userusecase.UserUseCase, logger *zap.SugaredLog
 func (uh *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 	userFromLoginForm, err := checkRequestFormat(uh.Logger, w, r)
 	if err != nil || userFromLoginForm == nil {
-		errText := fmt.Sprintf(`{"message": "error in login request: %s"}`, err)
-		delivery.WriteResponse(uh.Logger, w, []byte(errText), http.StatusUnauthorized)
 		return
 	}
 	loggedInUser, err := uh.UserUseCases.Login(userFromLoginForm.Username, userFromLoginForm.Password)
@@ -92,14 +90,14 @@ func checkRequestFormat(logger *zap.SugaredLogger, w http.ResponseWriter, r *htt
 	rBody, err := io.ReadAll(r.Body)
 	if err != nil {
 		errText := fmt.Sprintf(`{"message": "error in reading request body: %s"}`, err)
-		delivery.WriteResponse(logger, w, []byte(errText), http.StatusBadRequest)
+		delivery.WriteResponse(logger, w, []byte(errText), http.StatusUnauthorized)
 		return nil, err
 	}
 	userFromLoginForm := &dto.AuthRequestDTO{}
 	err = json.Unmarshal(rBody, userFromLoginForm)
 	if err != nil {
 		errText := fmt.Sprintf(`{"message": "error in decoding user: %s"}`, err)
-		delivery.WriteResponse(logger, w, []byte(errText), http.StatusInternalServerError)
+		delivery.WriteResponse(logger, w, []byte(errText), http.StatusUnauthorized)
 		return nil, err
 	}
 	if validationErrors := userFromLoginForm.Validate(); len(validationErrors) != 0 {
@@ -110,7 +108,7 @@ func checkRequestFormat(logger *zap.SugaredLogger, w http.ResponseWriter, r *htt
 			return nil, err
 		}
 		logger.Errorf("login form did not pass validation: %s", err)
-		delivery.WriteResponse(logger, w, errorsJSON, http.StatusUnprocessableEntity)
+		delivery.WriteResponse(logger, w, errorsJSON, http.StatusUnauthorized)
 		return nil, err
 	}
 	return userFromLoginForm, nil
