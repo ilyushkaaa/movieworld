@@ -51,23 +51,23 @@ func (r *FilmRepoMySQL) GetFilmsRepo(genre, country, producer string) ([]*entity
 		query += " AND f.producer_name = ?"
 	}
 	rows, err := r.db.Query(query, args...)
-	defer func(rows *sql.Rows) {
-		err := rows.Close()
-		if err != nil {
-			r.logger.Errorf("error in closing db rows in mysql")
-		}
-	}(rows)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
 		}
 		return nil, err
 	}
+	defer func(rows *sql.Rows) {
+		err := rows.Close()
+		if err != nil {
+			r.logger.Errorf("error in closing db rows in mysql")
+		}
+	}(rows)
 	films := make([]*entity.Film, 0)
 	for rows.Next() {
 		film := &entity.Film{}
 		err = rows.Scan(&film.ID, &film.Name, &film.Description, &film.Duration, &film.MinAge, &film.Country,
-			&film.ProducerName, film.DateOfRelease, &film.NumOfMarks, &film.Rating)
+			&film.ProducerName, &film.DateOfRelease, &film.NumOfMarks, &film.Rating)
 		if err != nil {
 			return nil, err
 		}

@@ -36,8 +36,8 @@ func (rl *RateLimiterRepoRedis) CheckRateLimitRepo(userAddr string, minTime int6
 }
 
 func (rl *RateLimiterRepoRedis) AddRateRepo(userAddr string, currentTime int64) {
-	_, err := rl.RedisConn.Do("ZADD", userAddr, "", currentTime)
+	_, err := rl.RedisConn.Do("ZADD", userAddr, currentTime, currentTime)
 	if err != nil {
-		rl.logger.Errorf("error in adding request in ratelimiter")
+		rl.logger.Errorf("error in adding request in ratelimiter: %s", err)
 	}
 }

@@ -29,7 +29,7 @@ func (rs *ReviewGRPCServer) GetFilmReviews(_ context.Context, in *review.FilmID)
 	reviews, err := rs.ReviewRepo.GetFilmReviewsRepo(in.GetID())
 	rs.mu.RUnlock()
 	if err != nil {
-		return nil, err
+		return &review.Reviews{}, err
 	}
 	return &review.Reviews{
 		Reviews: reviews,
@@ -41,21 +41,21 @@ func (rs *ReviewGRPCServer) NewReview(_ context.Context, in *review.NewReviewDat
 	_, err := rs.ReviewRepo.GetReviewByFilmUser(in.GetFilmID().ID, in.GetUserID().ID)
 	rs.mu.RUnlock()
 	if err == nil {
-		return nil, nil
+		return &review.Review{}, nil
 	}
 	if err != nil {
 		if !errors.Is(err, errorreview.ErrorNoReview) {
-			return nil, err
+			return &review.Review{}, err
 		}
 	}
 	rs.mu.Lock()
 	newReview, err := rs.ReviewRepo.NewReviewRepo(in.GetReview(), in.GetFilmID().ID, in.GetUserID().ID)
 	rs.mu.Unlock()
 	if err != nil {
-		return nil, err
+		return &review.Review{}, err
 	}
 	rs.mu.Lock()
-	rs.ReviewRepo.ChangeRatingAddReview(newReview, in.Review.ID.ID)
+	rs.ReviewRepo.ChangeRatingAddReview(newReview, newReview.ID.ID)
 	rs.mu.Unlock()
 	return newReview, nil
 }
@@ -75,6 +75,9 @@ func (rs *ReviewGRPCServer) DeleteReview(_ context.Context, in *review.DeleteRev
 		}, err
 	}
 	rs.mu.Lock()
+	rs.ReviewRepo.ChangeRatingAfterDeleteReview(rev, in.ReviewID.ID)
+	rs.mu.Unlock()
+	rs.mu.Lock()
 	isDeleted, err := rs.ReviewRepo.DeleteReviewRepo(rev.ID.ID)
 	rs.mu.Unlock()
 	if err != nil {
@@ -82,9 +85,6 @@ func (rs *ReviewGRPCServer) DeleteReview(_ context.Context, in *review.DeleteRev
 			IsDeleted: false,
 		}, err
 	}
-	rs.mu.Lock()
-	rs.ReviewRepo.ChangeRatingAfterDeleteReview(rev, in.ReviewID.ID)
-	rs.mu.Unlock()
 	return &review.DeletedData{
 		IsDeleted: isDeleted,
 		Review:    rev,
@@ -96,16 +96,16 @@ func (rs *ReviewGRPCServer) UpdateReview(_ context.Context, in *review.UpdateRev
 	oldReview, err := rs.ReviewRepo.GetUserReviewByID(in.Review.ID.ID, in.UserID.ID)
 	rs.mu.RUnlock()
 	if errors.Is(err, errorreview.ErrorNoReview) {
-		return nil, nil
+		return &review.Review{}, nil
 	}
 	if err != nil {
-		return nil, err
+		return &review.Review{}, err
 	}
 	rs.mu.Lock()
 	updatedReview, err := rs.ReviewRepo.UpdateReviewRepo(in.Review)
 	rs.mu.Unlock()
 	if err != nil {
-		return nil, err
+		return &review.Review{}, err
 	}
 	rs.mu.Lock()
 	rs.ReviewRepo.ChangeRatingAfterUpdateReview(oldReview, updatedReview, in.Review.ID.ID)

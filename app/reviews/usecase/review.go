@@ -60,7 +60,7 @@ func (r *ReviewGRPCClient) NewReview(newReview *dto.ReviewDTO, filmID uint64, us
 	if err != nil {
 		return nil, err
 	}
-	if newReviewGRPC == nil {
+	if newReviewGRPC.ID == nil {
 		return nil, nil
 	}
 	reviewApp := getReviewFromGRPCStruct(newReviewGRPC)
@@ -77,9 +77,6 @@ func (r *ReviewGRPCClient) DeleteReview(reviewID, userID uint64) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	if deletedData.IsDeleted {
-
-	}
 	return deletedData.IsDeleted, nil
 }
 
@@ -94,6 +91,9 @@ func (r *ReviewGRPCClient) UpdateReview(reviewToUpdate *dto.ReviewDTO, reviewID 
 	})
 	if err != nil {
 		return nil, err
+	}
+	if updatedReviewGRPC.ID == nil {
+		return nil, nil
 	}
 	updatedReviewApp := getReviewFromGRPCStruct(updatedReviewGRPC)
 	updatedReviewApp.Author = user

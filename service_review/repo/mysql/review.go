@@ -64,7 +64,7 @@ func (r *ReviewRepoMySQL) GetFilmReviewsRepo(filmID uint64) ([]*review.Review, e
 }
 
 func (r *ReviewRepoMySQL) NewReviewRepo(newReview *review.Review, filmID, userID uint64) (*review.Review, error) {
-	_, err := r.db.Exec(
+	res, err := r.db.Exec(
 		"INSERT INTO reviews (`mark`, `comment`, `user_id`, `film_id`) VALUES (?, ?, ?, ?)",
 		newReview.Mark,
 		newReview.Comment,
@@ -74,6 +74,18 @@ func (r *ReviewRepoMySQL) NewReviewRepo(newReview *review.Review, filmID, userID
 	if err != nil {
 		return nil, err
 	}
+	id, err := res.LastInsertId()
+	if err != nil {
+		return nil, err
+	}
+	newReview.ID = &review.ReviewID{
+		ID: uint64(id),
+	}
+	err = r.getReviewAuthor(newReview)
+	if err != nil {
+		return nil, err
+	}
+
 	return newReview, nil
 
 }
@@ -99,7 +111,21 @@ func (r *ReviewRepoMySQL) UpdateReviewRepo(reviewToUpdate *review.Review) (*revi
 	if err != nil {
 		return nil, err
 	}
+	err = r.getReviewAuthor(reviewToUpdate)
+	if err != nil {
+		return nil, err
+	}
 	return reviewToUpdate, nil
+}
+
+func (r *ReviewRepoMySQL) getReviewAuthor(reviewToUpdate *review.Review) error {
+	reviewToUpdate.Author = &review.User{
+		ID: &review.UserID{},
+	}
+	err := r.db.
+		QueryRow("SELECT u.id, u.username from users u JOIN reviews r on u.id = r.user_id WHERE r.id = ?", reviewToUpdate.ID.ID).
+		Scan(&reviewToUpdate.Author.ID.ID, &reviewToUpdate.Author.Username)
+	return err
 }
 
 func (r *ReviewRepoMySQL) GetReviewByFilmUser(filmID, userID uint64) (uint64, error) {
@@ -118,7 +144,7 @@ func (r *ReviewRepoMySQL) GetReviewByFilmUser(filmID, userID uint64) (uint64, er
 }
 
 func (r *ReviewRepoMySQL) GetUserReviewByID(reviewID, userID uint64) (*review.Review, error) {
-	var foundReview *review.Review
+	foundReview := &review.Review{}
 	foundReview.ID = &review.ReviewID{}
 	err := r.db.
 		QueryRow("SELECT id, mark from reviews WHERE id = ? AND user_id = ?", reviewID, userID).
@@ -134,7 +160,6 @@ func (r *ReviewRepoMySQL) GetUserReviewByID(reviewID, userID uint64) (*review.Re
 }
 
 func (r *ReviewRepoMySQL) ChangeRatingAfterDeleteReview(oldReview *review.Review, reviewID uint64) {
-
 	_, err := r.db.Exec(
 		`UPDATE films 
                 SET 
@@ -164,7 +189,7 @@ func (r *ReviewRepoMySQL) ChangeRatingAfterUpdateReview(oldReview, newReview *re
 		reviewID,
 	)
 	if err != nil {
-		r.logger.Errorf("error in changing rating after update review")
+		r.logger.Errorf("error in changing rating after update review: %s", err)
 	}
 }
 

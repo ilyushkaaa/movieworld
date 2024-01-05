@@ -24,6 +24,7 @@ import (
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/joho/godotenv"
 )
 
 // TODO поменять адреса серверов на их имена из доккер компоус
@@ -37,7 +38,7 @@ func openMySQLConnection() (*sql.DB, error) {
 	dsn := "root:"
 	mysqlPassword := os.Getenv("pass")
 	dsn += mysqlPassword
-	dsn += "@tcp(mysql:3306)/golang?"
+	dsn += "@tcp(127.0.0.1:3306)/golang?"
 	dsn += "&charset=utf8"
 	dsn += "&interpolateParams=true"
 	db, err := sql.Open("mysql", dsn)
@@ -62,7 +63,7 @@ func openMySQLConnection() (*sql.DB, error) {
 }
 
 func openRedis() (redis.Conn, error) {
-	c, err := redis.DialURL("redis://user:@redis:6379/0")
+	c, err := redis.DialURL("redis://user:@127.0.0.1:6379/0")
 	if err != nil {
 		return nil, err
 	}
@@ -83,11 +84,17 @@ func main() {
 			log.Printf("error in logger sync")
 		}
 	}()
+	envFilePath := "./.env"
+	err = godotenv.Load(envFilePath)
+	if err != nil {
+		logger.Fatalf("Error loading .env file: %s", err)
+	}
 	mySQLDb, err := openMySQLConnection()
 	if err != nil {
 		logger.Errorf("error in connection to mysql: %s", err)
 		return
 	}
+	logger.Infof("connected to mysql")
 	defer func() {
 		err = mySQLDb.Close()
 		if err != nil {
@@ -159,7 +166,7 @@ func main() {
 	router.HandleFunc("/actor/{ACTOR_ID}", actorHandler.GetActorByID).Methods(http.MethodGet)
 
 	router.HandleFunc("/films", filmHandler.GetFilms).Methods(http.MethodGet)
-	router.HandleFunc("/films/{ACTOR_ID}", filmHandler.GetFilmsByActor).Methods(http.MethodGet)
+	router.HandleFunc("/films/by/{ACTOR_ID}", filmHandler.GetFilmsByActor).Methods(http.MethodGet)
 
 	router.HandleFunc("/film/{FILM_ID}", filmHandler.GetFilmByID).Methods(http.MethodGet)
 	router.HandleFunc("/films/soon", filmHandler.GetFilmsSoon).Methods(http.MethodGet)
@@ -193,7 +200,7 @@ func main() {
 	errorLogRouter := middleware.ErrorLog(logger, accessLogRouter)
 	mux := middleware.RateLimiterMiddleware(logger, rateLimiterUseCase, errorLogRouter)
 
-	addr := ":8040"
+	addr := ":8080"
 
 	logger.Infow("starting server",
 		"type", "START",

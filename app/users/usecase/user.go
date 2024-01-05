@@ -33,7 +33,7 @@ func (a *AuthGRPCClient) Login(username, password string) (*entity.User, error) 
 	if err != nil {
 		return nil, err
 	}
-	if loggedInUser == nil {
+	if loggedInUser.ID == 0 {
 		return nil, nil
 	}
 	newUserApp := getUserFromGRPCStruct(loggedInUser)
@@ -41,14 +41,14 @@ func (a *AuthGRPCClient) Login(username, password string) (*entity.User, error) 
 }
 
 func (a *AuthGRPCClient) Register(username, password string) (*entity.User, error) {
-	newUser, err := a.grpcClient.Login(context.Background(), &auth.AuthData{
+	newUser, err := a.grpcClient.Register(context.Background(), &auth.AuthData{
 		Username: username,
 		Password: password,
 	})
 	if err != nil {
 		return nil, err
 	}
-	if newUser == nil {
+	if newUser.ID == 0 {
 		return nil, errorapp.ErrorUserExists
 	}
 	newUserApp := getUserFromGRPCStruct(newUser)

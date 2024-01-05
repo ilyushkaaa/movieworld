@@ -1,7 +1,5 @@
 package entity
 
-import "time"
-
 type Film struct {
 	ID            uint64
 	Name          string
@@ -10,7 +8,7 @@ type Film struct {
 	MinAge        uint8
 	Country       string
 	ProducerName  string
-	DateOfRelease time.Time
+	DateOfRelease string
 	SumMark       uint64
 	NumOfMarks    uint64
 	Rating        float64

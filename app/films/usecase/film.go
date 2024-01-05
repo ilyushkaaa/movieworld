@@ -100,11 +100,13 @@ func (f *FilmUseCaseStruct) AddFavouriteFilm(userID, filmID uint64) (bool, error
 	f.mu.RLock()
 	_, err = f.FilmRepo.GetFilmInFavourites(filmID, userID)
 	f.mu.RUnlock()
-	if errors.Is(err, errorapp.ErrorNoFilm) {
+	if err == nil {
 		return false, nil
 	}
 	if err != nil {
-		return false, err
+		if !errors.Is(err, errorapp.ErrorNoFilm) {
+			return false, err
+		}
 	}
 	f.mu.Lock()
 	wasAdded, err := f.FilmRepo.AddFavouriteFilmRepo(userID, filmID)

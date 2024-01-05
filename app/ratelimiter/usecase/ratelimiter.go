@@ -2,6 +2,8 @@ package ratelimiterusecase
 
 import (
 	ratelimiterrepo "kinopoisk/app/ratelimiter/repo/redis"
+	"log"
+	"net"
 	"sync"
 	"time"
 )
@@ -25,14 +27,21 @@ func NewRateLimiterUseCaseStruct(repo ratelimiterrepo.RateLimiterRepo) *RateLimi
 func (rl *RateLimiterUseCaseStruct) CheckRateLimit(userAddr string) bool {
 	currentTimeMillis := time.Now().UnixNano() / int64(time.Millisecond)
 	rl.mu.RLock()
-	numOfRequests := rl.RateLimiterRepo.CheckRateLimitRepo(userAddr, currentTimeMillis-2000)
+	host, _, err := net.SplitHostPort(userAddr)
+	if err != nil {
+		log.Printf("Ошибка при разборе адреса:", err)
+		return true
+	}
+	numOfRequests := rl.RateLimiterRepo.CheckRateLimitRepo(host, currentTimeMillis-2000)
 	rl.mu.RUnlock()
 	var canMakeRequest = false
 	if numOfRequests < 3 {
 		canMakeRequest = true
 		rl.mu.Lock()
-		rl.RateLimiterRepo.AddRateRepo(userAddr, currentTimeMillis)
+		rl.RateLimiterRepo.AddRateRepo(host, currentTimeMillis)
 		rl.mu.Unlock()
+	} else {
+		log.Printf("too much queries from %s\n", host)
 	}
 	return canMakeRequest
 }

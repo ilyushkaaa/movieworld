@@ -194,7 +194,7 @@ func (rh *ReviewHandler) UpdateReview(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if updatedReview == nil {
-		errText := fmt.Sprintf(`{"message": "review not found: %s"}`, err)
+		errText := fmt.Sprintf(`{"message": "review with id %d is not found"}`, reviewIDInt)
 		delivery.WriteResponse(rh.Logger, w, []byte(errText), http.StatusNotFound)
 		return
 	}

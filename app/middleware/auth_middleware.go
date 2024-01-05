@@ -29,7 +29,7 @@ func AuthMiddleware(logger *zap.SugaredLogger, uc userusecase.UserUseCase, next 
 		}
 		tokenValue := strings.TrimPrefix(authHeader, "Bearer ")
 		mySession, err := uc.GetSession(tokenValue)
-		if err != nil || mySession == nil {
+		if err != nil || mySession.ID == "" {
 			errText := fmt.Sprintf(`{"message": "there is no session for token %s}`, tokenValue)
 			delivery.WriteResponse(logger, w, []byte(errText), http.StatusUnauthorized)
 			return

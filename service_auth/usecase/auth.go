@@ -36,13 +36,16 @@ func NewAuthGRPCServer(userRepo userrepo.UserRepo, sessionRepo sessionrepo.Sessi
 func (a *AuthGRPCServer) Login(_ context.Context, in *auth.AuthData) (*auth.User, error) {
 	hashPassword, err := getHashPassword(in.Password)
 	if err != nil {
-		return nil, err
+		return &auth.User{}, err
 	}
 	a.mu.RLock()
 	loggedInUser, err := a.UserRepo.LoginRepo(in.Username, hashPassword)
 	a.mu.RUnlock()
 	if err != nil {
-		return nil, err
+		return &auth.User{}, err
+	}
+	if loggedInUser == nil {
+		loggedInUser = &auth.User{}
 	}
 	return loggedInUser, nil
 }
@@ -52,20 +55,23 @@ func (a *AuthGRPCServer) Register(_ context.Context, in *auth.AuthData) (*auth.U
 	loggedInUser, err := a.UserRepo.FindUserByUsername(in.Username)
 	a.mu.RUnlock()
 	if err != nil {
-		return nil, err
+		return &auth.User{}, err
 	}
 	if loggedInUser != nil {
-		return nil, nil
+		return &auth.User{}, nil
 	}
 	hashPassword, err := getHashPassword(in.Password)
 	if err != nil {
-		return nil, err
+		return &auth.User{}, err
 	}
 	a.mu.Lock()
 	newUser, err := a.UserRepo.RegisterRepo(in.Username, hashPassword)
 	a.mu.Unlock()
 	if err != nil {
-		return nil, err
+		return &auth.User{}, err
+	}
+	if newUser == nil {
+		newUser = &auth.User{}
 	}
 	return newUser, nil
 }
@@ -73,7 +79,7 @@ func (a *AuthGRPCServer) Register(_ context.Context, in *auth.AuthData) (*auth.U
 func (a *AuthGRPCServer) CreateSession(_ context.Context, in *auth.User) (*auth.Token, error) {
 	token, err := a.newToken(in)
 	if err != nil {
-		return nil, err
+		return &auth.Token{}, err
 	}
 	newSession := &auth.Session{
 		ID:   token,
@@ -83,7 +89,7 @@ func (a *AuthGRPCServer) CreateSession(_ context.Context, in *auth.User) (*auth.
 	err = a.SessionRepo.CreateSessionRepo(newSession)
 	a.mu.Unlock()
 	if err != nil {
-		return nil, err
+		return &auth.Token{}, err
 	}
 	return &auth.Token{Token: token}, nil
 
@@ -101,13 +107,13 @@ func (a *AuthGRPCServer) GetSession(_ context.Context, in *auth.Token) (*auth.Se
 	token, err := jwt.Parse(in.Token, hashSecretGetter)
 	if err != nil || !token.Valid {
 		fmt.Println("bad secret")
-		return nil, nil
+		return &auth.Session{}, nil
 	}
 	a.mu.RLock()
 	sess, err := a.SessionRepo.GetSessionRepo(in.Token)
 	a.mu.RUnlock()
 	if err != nil {
-		return nil, err
+		return &auth.Session{}, err
 	}
 	return sess, nil
 
@@ -118,7 +124,7 @@ func (a *AuthGRPCServer) DeleteSession(_ context.Context, in *auth.Token) (*auth
 	idDeleted, err := a.SessionRepo.DeleteSessionRepo(in.Token)
 	a.mu.Unlock()
 	if err != nil {
-		return nil, err
+		return &auth.IsDeleted{IsDeleted: false}, err
 	}
 	return &auth.IsDeleted{IsDeleted: idDeleted}, nil
 }
