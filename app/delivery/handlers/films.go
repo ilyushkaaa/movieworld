@@ -247,3 +247,32 @@ func (fh *FilmHandler) GetFilmActors(w http.ResponseWriter, r *http.Request) {
 	}
 	delivery.WriteResponse(fh.Logger, w, actorsJSON, http.StatusOK)
 }
+
+func (fh *FilmHandler) GetFilmGenres(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	filmID := vars["FILM_ID"]
+	filmIDint, err := strconv.ParseUint(filmID, 10, 64)
+	if err != nil {
+		errText := fmt.Sprintf(`{"message": "bad format of actor id: %s"}`, err)
+		delivery.WriteResponse(fh.Logger, w, []byte(errText), http.StatusBadRequest)
+		return
+	}
+	genres, err := fh.FilmUseCases.GetFilmGenres(filmIDint)
+	if errors.Is(err, errorapp.ErrorNoFilm) {
+		errText := fmt.Sprintf(`{"message": "no film with id: %d"}`, filmIDint)
+		delivery.WriteResponse(fh.Logger, w, []byte(errText), http.StatusNotFound)
+		return
+	}
+	if err != nil {
+		errText := fmt.Sprintf(`{"message": "internal server error: %s"}`, err)
+		delivery.WriteResponse(fh.Logger, w, []byte(errText), http.StatusInternalServerError)
+		return
+	}
+	actorsJSON, err := json.Marshal(genres)
+	if err != nil {
+		errText := fmt.Sprintf(`{"message": "error in coding actors: %s"}`, err)
+		delivery.WriteResponse(fh.Logger, w, []byte(errText), http.StatusInternalServerError)
+		return
+	}
+	delivery.WriteResponse(fh.Logger, w, actorsJSON, http.StatusOK)
+}

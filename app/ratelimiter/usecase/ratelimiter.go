@@ -15,7 +15,7 @@ type RateLimiterUseCaseStruct struct {
 	RateLimiterRepo ratelimiterrepo.RateLimiterRepo
 }
 
-func NewFilmUseCaseStruct(repo ratelimiterrepo.RateLimiterRepo) *RateLimiterUseCaseStruct {
+func NewRateLimiterUseCaseStruct(repo ratelimiterrepo.RateLimiterRepo) *RateLimiterUseCaseStruct {
 	return &RateLimiterUseCaseStruct{
 		mu:              &sync.RWMutex{},
 		RateLimiterRepo: repo,
@@ -30,7 +30,9 @@ func (rl *RateLimiterUseCaseStruct) CheckRateLimit(userAddr string) bool {
 	var canMakeRequest = false
 	if numOfRequests < 3 {
 		canMakeRequest = true
+		rl.mu.Lock()
 		rl.RateLimiterRepo.AddRateRepo(userAddr, currentTimeMillis)
+		rl.mu.Unlock()
 	}
 	return canMakeRequest
 }

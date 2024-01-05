@@ -11,6 +11,8 @@ import (
 	"net"
 	"os"
 	"time"
+
+	_ "github.com/go-sql-driver/mysql"
 )
 
 const (
@@ -76,9 +78,7 @@ func main() {
 		logger.Fatalf("can not listen port 8081: %s", err)
 	}
 	server := grpc.NewServer()
-
 	reviewRepo := reviewservicerepo.NewReviewRepoMySQL(mySQLDb, logger)
-
 	review.RegisterReviewMakerServer(server, reviewserviceusecse.NewReviewGRPCServer(reviewRepo))
 	logger.Info("starting server at :8081")
 	err = server.Serve(lis)

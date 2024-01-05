@@ -8,6 +8,7 @@ import (
 
 func RateLimiterMiddleware(logger *zap.SugaredLogger, rateLimiterUseCases ratelimiterusecase.RateLimiterUseCase, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		logger.Infof("ratelimiter middleware check")
 		requestAddr := r.RemoteAddr
 		canMakeRequest := rateLimiterUseCases.CheckRateLimit(requestAddr)
 		if !canMakeRequest {

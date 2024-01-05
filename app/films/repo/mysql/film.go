@@ -26,7 +26,7 @@ type FilmRepoMySQL struct {
 	logger *zap.SugaredLogger
 }
 
-func NewActorRepoMySQL(db *sql.DB, logger *zap.SugaredLogger) *FilmRepoMySQL {
+func NewFilmRepoMySQL(db *sql.DB, logger *zap.SugaredLogger) *FilmRepoMySQL {
 	return &FilmRepoMySQL{
 		db:     db,
 		logger: logger,
