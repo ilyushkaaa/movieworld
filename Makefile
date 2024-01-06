@@ -13,4 +13,6 @@ lint:
 .PHONY: test
 test:
 	go test ./app/delivery/handlers
+	go test ./app/films/usecase
+
 
