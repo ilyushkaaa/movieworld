@@ -5,6 +5,6 @@ WORKDIR /usr/local/src
 COPY ./ ./
 
 RUN go mod tidy
-RUN go build -o ./my_app_start ./main.go
+RUN go build -o ./service_review_start ./service_review/cmd/service_review/main.go
 
-CMD ["./my_app_start"]
+CMD ["./service_review_start"]
