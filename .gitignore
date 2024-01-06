@@ -1,2 +1,12 @@
 .idea
 .env
+service_review/.env
+service_auth/.env
+app/delivery/handlers/cover.out
+app/delivery/handlers/cover.html
+app/films/usecase/cover.html
+app/films/usecase/cover.out
+app/actors/usecase/cover.html
+app/actors/usecase/cover.out
+
+
