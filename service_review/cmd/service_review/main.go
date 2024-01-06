@@ -25,7 +25,7 @@ func openMySQLConnection() (*sql.DB, error) {
 	dsn := "root:"
 	mysqlPassword := os.Getenv("pass")
 	dsn += mysqlPassword
-	dsn += "@tcp(127.0.0.1:3306)/golang?"
+	dsn += "@tcp(mysql:3306)/golang?"
 	dsn += "&charset=utf8"
 	dsn += "&interpolateParams=true"
 	db, err := sql.Open("mysql", dsn)

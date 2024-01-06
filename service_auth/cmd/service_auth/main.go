@@ -27,7 +27,7 @@ func openMySQLConnection() (*sql.DB, error) {
 	dsn := "root:"
 	mysqlPassword := os.Getenv("pass")
 	dsn += mysqlPassword
-	dsn += "@tcp(127.0.0.1:3306)/golang?"
+	dsn += "@tcp(mysql:3306)/golang?"
 	dsn += "&charset=utf8"
 	dsn += "&interpolateParams=true"
 	db, err := sql.Open("mysql", dsn)
@@ -52,7 +52,7 @@ func openMySQLConnection() (*sql.DB, error) {
 }
 
 func openRedis() (redis.Conn, error) {
-	c, err := redis.DialURL("redis://user:@127.0.0.1:6379/0")
+	c, err := redis.DialURL("redis://user:@redis:6379/0")
 	if err != nil {
 		return nil, err
 	}

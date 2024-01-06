@@ -38,7 +38,7 @@ func openMySQLConnection() (*sql.DB, error) {
 	dsn := "root:"
 	mysqlPassword := os.Getenv("pass")
 	dsn += mysqlPassword
-	dsn += "@tcp(127.0.0.1:3306)/golang?"
+	dsn += "@tcp(mysql:3306)/golang?"
 	dsn += "&charset=utf8"
 	dsn += "&interpolateParams=true"
 	db, err := sql.Open("mysql", dsn)
@@ -63,7 +63,7 @@ func openMySQLConnection() (*sql.DB, error) {
 }
 
 func openRedis() (redis.Conn, error) {
-	c, err := redis.DialURL("redis://user:@127.0.0.1:6379/0")
+	c, err := redis.DialURL("redis://user:@redis:6379/0")
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +114,7 @@ func main() {
 	}(redisConn)
 
 	grpcConnReview, err := grpc.Dial(
-		"127.0.0.1:8081",
+		"service_review:8081",
 		grpc.WithInsecure(),
 	)
 	if err != nil {
@@ -128,7 +128,7 @@ func main() {
 	}(grpcConnReview)
 
 	grpcConnAuth, err := grpc.Dial(
-		"127.0.0.1:8082",
+		"service_auth:8082",
 		grpc.WithInsecure(),
 	)
 	if err != nil {
