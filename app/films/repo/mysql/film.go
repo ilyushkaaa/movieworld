@@ -58,7 +58,7 @@ func (r *FilmRepoMySQL) GetFilmsRepo(genre, country, producer string) ([]*entity
 		return nil, err
 	}
 	defer func(rows *sql.Rows) {
-		err := rows.Close()
+		err = rows.Close()
 		if err != nil {
 			r.logger.Errorf("error in closing db rows in mysql")
 		}
@@ -90,10 +90,10 @@ func (r *FilmRepoMySQL) GetFilmByIDRepo(filmID uint64) (*entity.Film, error) {
 	return film, nil
 }
 
-func (r *FilmRepoMySQL) GetFilmsByActorRepo(ID uint64) ([]*entity.Film, error) {
+func (r *FilmRepoMySQL) GetFilmsByActorRepo(id uint64) ([]*entity.Film, error) {
 	films := []*entity.Film{}
 	rows, err := r.db.Query(`SELECT f.id, f.name, f.description, f.duration, f.min_age, f.country, f.producer_name, f.date_of_release, f.num_of_marks, f.rating
-FROM films f INNER JOIN actor_films af ON f.id = af.film_id INNER JOIN actors a ON a.id = af.actor_id WHERE a.id = ?`, ID)
+FROM films f INNER JOIN actor_films af ON f.id = af.film_id INNER JOIN actors a ON a.id = af.actor_id WHERE a.id = ?`, id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, nil
@@ -101,7 +101,7 @@ FROM films f INNER JOIN actor_films af ON f.id = af.film_id INNER JOIN actors a 
 		return nil, err
 	}
 	defer func(rows *sql.Rows) {
-		err := rows.Close()
+		err = rows.Close()
 		if err != nil {
 			r.logger.Errorf("error in closing db rows")
 		}
@@ -127,7 +127,7 @@ func (r *FilmRepoMySQL) GetSoonFilmsRepo(date string) ([]*entity.Film, error) {
 		return nil, err
 	}
 	defer func(rows *sql.Rows) {
-		err := rows.Close()
+		err = rows.Close()
 		if err != nil {
 			r.logger.Errorf("error in closing db rows")
 		}
@@ -153,7 +153,7 @@ func (r *FilmRepoMySQL) GetFavouriteFilmsRepo(userID uint64) ([]*entity.Film, er
 		return nil, err
 	}
 	defer func(rows *sql.Rows) {
-		err := rows.Close()
+		err = rows.Close()
 		if err != nil {
 			r.logger.Errorf("error in closing db rows")
 		}
@@ -181,10 +181,10 @@ func (r *FilmRepoMySQL) AddFavouriteFilmRepo(userID, filmID uint64) (bool, error
 	return true, nil
 }
 
-func (r *FilmRepoMySQL) DeleteFavouriteFilmRepo(ID uint64) (bool, error) {
+func (r *FilmRepoMySQL) DeleteFavouriteFilmRepo(id uint64) (bool, error) {
 	_, err := r.db.Exec(
 		"DELETE FROM favourite_films WHERE id = ?",
-		ID,
+		id,
 	)
 	if err != nil {
 		return false, err
@@ -199,7 +199,7 @@ func (r *FilmRepoMySQL) GetFilmActorsRepo(filmID uint64) ([]*entity.Actor, error
 		return nil, err
 	}
 	defer func(rows *sql.Rows) {
-		err := rows.Close()
+		err = rows.Close()
 		if err != nil {
 			r.logger.Errorf("error in closing db rows")
 		}
@@ -222,7 +222,7 @@ func (r *FilmRepoMySQL) GetFilmGenresRepo(filmID uint64) ([]*entity.Genre, error
 		return nil, err
 	}
 	defer func(rows *sql.Rows) {
-		err := rows.Close()
+		err = rows.Close()
 		if err != nil {
 			r.logger.Errorf("error in closing db rows")
 		}

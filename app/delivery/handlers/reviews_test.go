@@ -41,6 +41,10 @@ func TestGetReviewsForFilm(t *testing.T) {
 		t.Fatalf("unable to read response body")
 		return
 	}
+	err = resp.Body.Close()
+	if err != nil {
+		t.Fatalf("failed to close response body")
+	}
 	if resp.StatusCode != 400 {
 		t.Errorf("expected status %d, got status %d", http.StatusBadRequest, resp.StatusCode)
 		return
@@ -59,6 +63,10 @@ func TestGetReviewsForFilm(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unable to read response body")
 		return
+	}
+	err = resp.Body.Close()
+	if err != nil {
+		t.Fatalf("failed to close response body")
 	}
 	if resp.StatusCode != 500 {
 		t.Errorf("expected status %d, got status %d", http.StatusInternalServerError, resp.StatusCode)
@@ -88,6 +96,10 @@ func TestGetReviewsForFilm(t *testing.T) {
 		t.Fatalf("unable to read response body")
 		return
 	}
+	err = resp.Body.Close()
+	if err != nil {
+		t.Fatalf("failed to close response body")
+	}
 	if resp.StatusCode != 200 {
 		t.Errorf("expected status %d, got status %d", http.StatusOK, resp.StatusCode)
 		return
@@ -112,6 +124,10 @@ func TestAddReview(t *testing.T) {
 		t.Fatalf("unable to read response body")
 		return
 	}
+	err = resp.Body.Close()
+	if err != nil {
+		t.Fatalf("failed to close response body")
+	}
 	if resp.StatusCode != 400 {
 		t.Errorf("expected status %d, got status %d", http.StatusBadRequest, resp.StatusCode)
 		return
@@ -129,6 +145,10 @@ func TestAddReview(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unable to read response body")
 		return
+	}
+	err = resp.Body.Close()
+	if err != nil {
+		t.Fatalf("failed to close response body")
 	}
 	if resp.StatusCode != 500 {
 		t.Errorf("expected status %d, got status %d", http.StatusInternalServerError, resp.StatusCode)
@@ -151,6 +171,10 @@ func TestAddReview(t *testing.T) {
 		t.Fatalf("unable to read response body")
 		return
 	}
+	err = resp.Body.Close()
+	if err != nil {
+		t.Fatalf("failed to close response body")
+	}
 	if resp.StatusCode != 400 {
 		t.Errorf("expected status %d, got status %d", http.StatusBadRequest, resp.StatusCode)
 	}
@@ -171,6 +195,10 @@ func TestAddReview(t *testing.T) {
 		t.Fatalf("unable to read response body")
 		return
 	}
+	err = resp.Body.Close()
+	if err != nil {
+		t.Fatalf("failed to close response body")
+	}
 	if resp.StatusCode != 400 {
 		t.Errorf("expected status %d, got status %d", http.StatusBadRequest, resp.StatusCode)
 	}
@@ -189,6 +217,10 @@ func TestAddReview(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unable to read response body")
 		return
+	}
+	err = resp.Body.Close()
+	if err != nil {
+		t.Fatalf("failed to close response body")
 	}
 	if resp.StatusCode != 422 {
 		t.Errorf("expected status %d, got status %d", http.StatusUnprocessableEntity, resp.StatusCode)
@@ -216,6 +248,10 @@ func TestAddReview(t *testing.T) {
 		t.Fatalf("unable to read response body")
 		return
 	}
+	err = resp.Body.Close()
+	if err != nil {
+		t.Fatalf("failed to close response body")
+	}
 	if resp.StatusCode != 500 {
 		t.Errorf("expected status %d, got status %d", http.StatusInternalServerError, resp.StatusCode)
 	}
@@ -233,6 +269,10 @@ func TestAddReview(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unable to read response body")
 		return
+	}
+	err = resp.Body.Close()
+	if err != nil {
+		t.Fatalf("failed to close response body")
 	}
 	if resp.StatusCode != 404 {
 		t.Errorf("expected status %d, got status %d", http.StatusNotFound, resp.StatusCode)
@@ -252,6 +292,10 @@ func TestAddReview(t *testing.T) {
 		t.Fatalf("unable to read response body")
 		return
 	}
+	err = resp.Body.Close()
+	if err != nil {
+		t.Fatalf("failed to close response body")
+	}
 	if resp.StatusCode != 400 {
 		t.Errorf("expected status %d, got status %d", http.StatusBadRequest, resp.StatusCode)
 	}
@@ -270,6 +314,10 @@ func TestAddReview(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unable to read response body")
 		return
+	}
+	err = resp.Body.Close()
+	if err != nil {
+		t.Fatalf("failed to close response body")
 	}
 	if resp.StatusCode != 200 {
 		t.Errorf("expected status %d, got status %d", http.StatusOK, resp.StatusCode)
@@ -296,6 +344,10 @@ func TestDeleteReview(t *testing.T) {
 		t.Fatalf("unable to read response body")
 		return
 	}
+	err = resp.Body.Close()
+	if err != nil {
+		t.Fatalf("failed to close response body")
+	}
 	if resp.StatusCode != 500 {
 		t.Errorf("expected status %d, got status %d", http.StatusInternalServerError, resp.StatusCode)
 		return
@@ -317,6 +369,10 @@ func TestDeleteReview(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unable to read response body")
 		return
+	}
+	err = resp.Body.Close()
+	if err != nil {
+		t.Fatalf("failed to close response body")
 	}
 	if resp.StatusCode != 400 {
 		t.Errorf("expected status %d, got status %d", http.StatusBadRequest, resp.StatusCode)

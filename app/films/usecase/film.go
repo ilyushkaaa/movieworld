@@ -56,9 +56,9 @@ func (f *FilmUseCaseStruct) GetFilmByID(filmID uint64) (*entity.Film, error) {
 	return film, nil
 }
 
-func (f *FilmUseCaseStruct) GetFilmsByActor(ID uint64) ([]*entity.Film, error) {
+func (f *FilmUseCaseStruct) GetFilmsByActor(id uint64) ([]*entity.Film, error) {
 	f.mu.RLock()
-	films, err := f.FilmRepo.GetFilmsByActorRepo(ID)
+	films, err := f.FilmRepo.GetFilmsByActorRepo(id)
 	f.mu.RUnlock()
 	if err != nil {
 		return nil, err

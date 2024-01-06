@@ -140,11 +140,11 @@ func (rh *ReviewHandler) DeleteReview(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !wasDeleted {
-		result := fmt.Sprintf(`{"meassage": "not found"}`)
+		result := `{"message": "not found"}`
 		delivery.WriteResponse(rh.Logger, w, []byte(result), http.StatusNotFound)
 		return
 	}
-	result := fmt.Sprintf(`{"result": "success"}`)
+	result := `{"result": "success"}`
 	delivery.WriteResponse(rh.Logger, w, []byte(result), http.StatusOK)
 }
 

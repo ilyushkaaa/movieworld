@@ -29,7 +29,7 @@ func NewFilmHandler(filmUseCases filmusecase.FilmUseCase, logger *zap.SugaredLog
 }
 
 func checkUnknownParams(query url.Values) error {
-	for key, _ := range query {
+	for key := range query {
 		if key != "genre" && key != "country" && key != "director" {
 			return fmt.Errorf("unknown param")
 		}
@@ -41,7 +41,7 @@ func (fh *FilmHandler) GetFilms(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 	err := checkUnknownParams(query)
 	if err != nil {
-		errText := fmt.Sprintf(`{"message": "bad params in query"}`)
+		errText := `{"message": "bad params in query"}`
 		delivery.WriteResponse(fh.Logger, w, []byte(errText), http.StatusBadRequest)
 		return
 	}
@@ -181,11 +181,11 @@ func (fh *FilmHandler) AddFavouriteFilm(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	if !wasAdded {
-		result := fmt.Sprintf(`{"result": "was not added"}`)
+		result := `{"result": "was not added"}`
 		delivery.WriteResponse(fh.Logger, w, []byte(result), http.StatusOK)
 		return
 	}
-	result := fmt.Sprintf(`{"result": "was added"}`)
+	result := `{"result": "was added"}`
 	delivery.WriteResponse(fh.Logger, w, []byte(result), http.StatusOK)
 }
 

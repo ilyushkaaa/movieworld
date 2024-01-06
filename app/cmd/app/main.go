@@ -6,6 +6,7 @@ import (
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	actorrepo "kinopoisk/app/actors/repo/mysql"
 	actorusecase "kinopoisk/app/actors/usecase"
 	"kinopoisk/app/delivery/handlers"
@@ -115,13 +116,13 @@ func main() {
 
 	grpcConnReview, err := grpc.Dial(
 		"service_review:8081",
-		grpc.WithInsecure(),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
 		logger.Fatalf("cant connect to grpc review service")
 	}
 	defer func(grcpConnReview *grpc.ClientConn) {
-		err := grcpConnReview.Close()
+		err = grcpConnReview.Close()
 		if err != nil {
 			logger.Errorf("can not stop grpc review server")
 		}
@@ -129,13 +130,13 @@ func main() {
 
 	grpcConnAuth, err := grpc.Dial(
 		"service_auth:8082",
-		grpc.WithInsecure(),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
 		logger.Fatalf("cant connect to grpc auth service")
 	}
 	defer func(grcpConnAuth *grpc.ClientConn) {
-		err := grcpConnAuth.Close()
+		err = grcpConnAuth.Close()
 		if err != nil {
 			logger.Errorf("can not stop grpc user server")
 		}
@@ -188,13 +189,13 @@ func main() {
 	router.Handle("/review/{REVIEW_ID}", middleware.AuthMiddleware(logger, authUseCase, checkAuthRouter)).Methods(http.MethodDelete)
 	router.Handle("/review/{REVIEW_ID}", middleware.AuthMiddleware(logger, authUseCase, checkAuthRouter)).Methods(http.MethodPut)
 
-	checkAuthRouter.HandleFunc("/films/favourite", filmHandler.GetFavouriteFilms).Methods(http.MethodGet)                // auth
-	checkAuthRouter.HandleFunc("/films/favourite/{FILM_ID}", filmHandler.AddFavouriteFilm).Methods(http.MethodPost)      // auth
-	checkAuthRouter.HandleFunc("/films/favourite/{FILM_ID}", filmHandler.DeleteFavouriteFilm).Methods(http.MethodDelete) //auth
+	checkAuthRouter.HandleFunc("/films/favourite", filmHandler.GetFavouriteFilms).Methods(http.MethodGet)
+	checkAuthRouter.HandleFunc("/films/favourite/{FILM_ID}", filmHandler.AddFavouriteFilm).Methods(http.MethodPost)
+	checkAuthRouter.HandleFunc("/films/favourite/{FILM_ID}", filmHandler.DeleteFavouriteFilm).Methods(http.MethodDelete)
 
-	checkAuthRouter.HandleFunc("/review/{FILM_ID}", reviewHandler.AddReview).Methods(http.MethodPost)        // auth
-	checkAuthRouter.HandleFunc("/review/{REVIEW_ID}", reviewHandler.DeleteReview).Methods(http.MethodDelete) // auth
-	checkAuthRouter.HandleFunc("/review/{REVIEW_ID}", reviewHandler.UpdateReview).Methods(http.MethodPut)    // auth
+	checkAuthRouter.HandleFunc("/review/{FILM_ID}", reviewHandler.AddReview).Methods(http.MethodPost)
+	checkAuthRouter.HandleFunc("/review/{REVIEW_ID}", reviewHandler.DeleteReview).Methods(http.MethodDelete)
+	checkAuthRouter.HandleFunc("/review/{REVIEW_ID}", reviewHandler.UpdateReview).Methods(http.MethodPut)
 
 	accessLogRouter := middleware.AccessLog(logger, router)
 	errorLogRouter := middleware.ErrorLog(logger, accessLogRouter)

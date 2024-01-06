@@ -24,10 +24,10 @@ func NewActorRepoMySQL(db *sql.DB, logger *zap.SugaredLogger) *ActorRepoMySQL {
 	}
 }
 
-func (r *ActorRepoMySQL) GetActorByIDRepo(ID uint64) (*entity.Actor, error) {
+func (r *ActorRepoMySQL) GetActorByIDRepo(id uint64) (*entity.Actor, error) {
 	actor := &entity.Actor{}
 	err := r.db.
-		QueryRow("SELECT id, name, surname, nationality, birthday FROM actors WHERE id = ?", ID).
+		QueryRow("SELECT id, name, surname, nationality, birthday FROM actors WHERE id = ?", id).
 		Scan(&actor.ID, &actor.Name, &actor.Surname, &actor.Nationality, &actor.Birthday)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -45,7 +45,7 @@ func (r *ActorRepoMySQL) GetActorsRepo() ([]*entity.Actor, error) {
 		return nil, err
 	}
 	defer func(rows *sql.Rows) {
-		err := rows.Close()
+		err = rows.Close()
 		if err != nil {
 			r.logger.Errorf("error in closing db rows")
 		}

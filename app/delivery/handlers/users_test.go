@@ -30,6 +30,10 @@ func TestLogin(t *testing.T) {
 		t.Fatalf("unable to read response body")
 		return
 	}
+	err = resp.Body.Close()
+	if err != nil {
+		t.Fatalf("failed to close response body")
+	}
 	if resp.StatusCode != 401 {
 		t.Errorf("expected status %d, got status %d", http.StatusUnauthorized, resp.StatusCode)
 	}
@@ -43,6 +47,10 @@ func TestLogin(t *testing.T) {
 		t.Fatalf("unable to read response body")
 		return
 	}
+	err = resp.Body.Close()
+	if err != nil {
+		t.Fatalf("failed to close response body")
+	}
 	if resp.StatusCode != 401 {
 		t.Errorf("expected status %d, got status %d", http.StatusUnauthorized, resp.StatusCode)
 	}
@@ -55,6 +63,10 @@ func TestLogin(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unable to read response body")
 		return
+	}
+	err = resp.Body.Close()
+	if err != nil {
+		t.Fatalf("failed to close response body")
 	}
 	if resp.StatusCode != 401 {
 		t.Errorf("expected status %d, got status %d", http.StatusUnauthorized, resp.StatusCode)
@@ -70,6 +82,10 @@ func TestLogin(t *testing.T) {
 		t.Fatalf("unable to read response body")
 		return
 	}
+	err = resp.Body.Close()
+	if err != nil {
+		t.Fatalf("failed to close response body")
+	}
 	if resp.StatusCode != 500 {
 		t.Errorf("expected status %d, got status %d", http.StatusInternalServerError, resp.StatusCode)
 	}
@@ -83,6 +99,10 @@ func TestLogin(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unable to read response body")
 		return
+	}
+	err = resp.Body.Close()
+	if err != nil {
+		t.Fatalf("failed to close response body")
 	}
 	if resp.StatusCode != 401 {
 		t.Errorf("expected status %d, got status %d", http.StatusUnauthorized, resp.StatusCode)
@@ -103,6 +123,10 @@ func TestLogin(t *testing.T) {
 		t.Fatalf("unable to read response body")
 		return
 	}
+	err = resp.Body.Close()
+	if err != nil {
+		t.Fatalf("failed to close response body")
+	}
 	if resp.StatusCode != 500 {
 		t.Errorf("expected status %d, got status %d", http.StatusInternalServerError, resp.StatusCode)
 	}
@@ -117,6 +141,10 @@ func TestLogin(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unable to read response body")
 		return
+	}
+	err = resp.Body.Close()
+	if err != nil {
+		t.Fatalf("failed to close response body")
 	}
 	if resp.StatusCode != 200 {
 		t.Errorf("expected status %d, got status %d", http.StatusOK, resp.StatusCode)

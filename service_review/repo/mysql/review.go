@@ -42,7 +42,7 @@ func (r *ReviewRepoMySQL) GetFilmReviewsRepo(filmID uint64) ([]*review.Review, e
 		return nil, err
 	}
 	defer func(rows *sql.Rows) {
-		err := rows.Close()
+		err = rows.Close()
 		if err != nil {
 			r.logger.Errorf("error in closing db rows")
 		}

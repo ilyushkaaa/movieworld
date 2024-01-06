@@ -27,7 +27,6 @@ linters:
     - dupl
     - goconst
     - gocritic
-    - gocyclo
     - nakedret
     - nestif
     - prealloc

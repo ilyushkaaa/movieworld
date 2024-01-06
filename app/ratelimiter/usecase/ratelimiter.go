@@ -29,7 +29,7 @@ func (rl *RateLimiterUseCaseStruct) CheckRateLimit(userAddr string) bool {
 	rl.mu.RLock()
 	host, _, err := net.SplitHostPort(userAddr)
 	if err != nil {
-		log.Printf("Ошибка при разборе адреса:", err)
+		log.Printf("error in spliting addres: %s", err)
 		return true
 	}
 	numOfRequests := rl.RateLimiterRepo.CheckRateLimitRepo(host, currentTimeMillis-2000)

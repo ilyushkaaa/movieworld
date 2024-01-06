@@ -33,9 +33,9 @@ func (a *ActorUseCaseStruct) GetActors() ([]*entity.Actor, error) {
 	return actors, nil
 }
 
-func (a *ActorUseCaseStruct) GetActorByID(ID uint64) (*entity.Actor, error) {
+func (a *ActorUseCaseStruct) GetActorByID(id uint64) (*entity.Actor, error) {
 	a.mu.RLock()
-	actor, err := a.ActorRepo.GetActorByIDRepo(ID)
+	actor, err := a.ActorRepo.GetActorByIDRepo(id)
 	a.mu.RUnlock()
 	if err != nil {
 		return nil, err

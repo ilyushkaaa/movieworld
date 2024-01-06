@@ -11,7 +11,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
 )
 
 func TestGetActors(t *testing.T) {
@@ -31,19 +30,23 @@ func TestGetActors(t *testing.T) {
 		t.Fatalf("unable to read response body")
 		return
 	}
+	err = resp.Body.Close()
+	if err != nil {
+		t.Fatalf("failed to close response body")
+	}
 	if resp.StatusCode != 500 {
 		t.Errorf("expected status %d, got status %d", http.StatusInternalServerError, resp.StatusCode)
 		return
 	}
 
-	//usecase returns actors without error
+	// usecase returns actors without error
 	actors := []*entity.Actor{
 		{
 			ID:          1,
 			Name:        "Sergey",
 			Surname:     "Burunov",
 			Nationality: "Russian",
-			Birthday:    time.Now(),
+			Birthday:    "2012-12-12",
 		},
 	}
 	testUseCase.EXPECT().GetActors().Return(actors, nil)
@@ -55,6 +58,10 @@ func TestGetActors(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unable to read response body")
 		return
+	}
+	err = resp.Body.Close()
+	if err != nil {
+		t.Fatalf("failed to close response body")
 	}
 	if resp.StatusCode != 200 {
 		t.Errorf("expected status %d, got status %d", http.StatusOK, resp.StatusCode)
@@ -79,6 +86,10 @@ func TestGetActorByID(t *testing.T) {
 		t.Fatalf("unable to read response body")
 		return
 	}
+	err = resp.Body.Close()
+	if err != nil {
+		t.Fatalf("failed to close response body")
+	}
 	if resp.StatusCode != http.StatusBadRequest {
 		t.Errorf("expected status %d, got status %d", http.StatusBadRequest, resp.StatusCode)
 		return
@@ -98,6 +109,10 @@ func TestGetActorByID(t *testing.T) {
 		t.Fatalf("unable to read response body")
 		return
 	}
+	err = resp.Body.Close()
+	if err != nil {
+		t.Fatalf("failed to close response body")
+	}
 	if resp.StatusCode != 500 {
 		t.Errorf("expected status %d, got status %d", http.StatusInternalServerError, resp.StatusCode)
 		return
@@ -116,6 +131,10 @@ func TestGetActorByID(t *testing.T) {
 		t.Fatalf("unable to read response body")
 		return
 	}
+	err = resp.Body.Close()
+	if err != nil {
+		t.Fatalf("failed to close response body")
+	}
 	if resp.StatusCode != 404 {
 		t.Errorf("expected status %d, got status %d", http.StatusNotFound, resp.StatusCode)
 		return
@@ -127,7 +146,7 @@ func TestGetActorByID(t *testing.T) {
 		Name:        "Sergey",
 		Surname:     "Burunov",
 		Nationality: "Russian",
-		Birthday:    time.Now(),
+		Birthday:    "2012-12-12",
 	}
 	testUseCase.EXPECT().GetActorByID(ID).Return(actor, nil)
 	request = httptest.NewRequest(http.MethodGet, "/actor/1", nil)
@@ -139,6 +158,10 @@ func TestGetActorByID(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unable to read response body")
 		return
+	}
+	err = resp.Body.Close()
+	if err != nil {
+		t.Fatalf("failed to close response body")
 	}
 	if resp.StatusCode != 200 {
 		t.Errorf("expected status %d, got status %d", http.StatusOK, resp.StatusCode)

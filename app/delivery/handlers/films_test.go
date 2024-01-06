@@ -14,7 +14,6 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
-	"time"
 )
 
 func TestGetFilms(t *testing.T) {
@@ -33,6 +32,10 @@ func TestGetFilms(t *testing.T) {
 		t.Fatalf("unable to read response body")
 		return
 	}
+	err = resp.Body.Close()
+	if err != nil {
+		t.Fatalf("failed to close response body")
+	}
 	if resp.StatusCode != 400 {
 		t.Errorf("expected status %d, got status %d", http.StatusBadRequest, resp.StatusCode)
 		return
@@ -49,6 +52,10 @@ func TestGetFilms(t *testing.T) {
 		t.Fatalf("unable to read response body")
 		return
 	}
+	err = resp.Body.Close()
+	if err != nil {
+		t.Fatalf("failed to close response body")
+	}
 	if resp.StatusCode != 500 {
 		t.Errorf("expected status %d, got status %d", http.StatusInternalServerError, resp.StatusCode)
 		return
@@ -64,7 +71,7 @@ func TestGetFilms(t *testing.T) {
 			MinAge:        12,
 			Country:       "USA",
 			ProducerName:  "Ivan",
-			DateOfRelease: time.Now(),
+			DateOfRelease: "2012-12-12",
 		},
 	}
 	testUseCase.EXPECT().GetFilms("Drama", "", "").Return(films, nil)
@@ -76,6 +83,10 @@ func TestGetFilms(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unable to read response body")
 		return
+	}
+	err = resp.Body.Close()
+	if err != nil {
+		t.Fatalf("failed to close response body")
 	}
 	if resp.StatusCode != 200 {
 		t.Errorf("expected status %d, got status %d", http.StatusOK, resp.StatusCode)
@@ -100,6 +111,10 @@ func TestGetFilmByID(t *testing.T) {
 		t.Fatalf("unable to read response body")
 		return
 	}
+	err = resp.Body.Close()
+	if err != nil {
+		t.Fatalf("failed to close response body")
+	}
 	if resp.StatusCode != 400 {
 		t.Errorf("expected status %d, got status %d", http.StatusBadRequest, resp.StatusCode)
 		return
@@ -119,6 +134,10 @@ func TestGetFilmByID(t *testing.T) {
 		t.Fatalf("unable to read response body")
 		return
 	}
+	err = resp.Body.Close()
+	if err != nil {
+		t.Fatalf("failed to close response body")
+	}
 	if resp.StatusCode != 500 {
 		t.Errorf("expected status %d, got status %d", http.StatusInternalServerError, resp.StatusCode)
 		return
@@ -136,6 +155,10 @@ func TestGetFilmByID(t *testing.T) {
 		t.Fatalf("unable to read response body")
 		return
 	}
+	err = resp.Body.Close()
+	if err != nil {
+		t.Fatalf("failed to close response body")
+	}
 	if resp.StatusCode != 404 {
 		t.Errorf("expected status %d, got status %d", http.StatusNotFound, resp.StatusCode)
 		return
@@ -151,7 +174,7 @@ func TestGetFilmByID(t *testing.T) {
 		MinAge:        12,
 		Country:       "USA",
 		ProducerName:  "Ivan",
-		DateOfRelease: time.Now(),
+		DateOfRelease: "2012-12-12",
 	}
 	testUseCase.EXPECT().GetFilmByID(filmID).Return(film, nil)
 	request = httptest.NewRequest(http.MethodGet, "/film/1", nil)
@@ -163,6 +186,10 @@ func TestGetFilmByID(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unable to read response body")
 		return
+	}
+	err = resp.Body.Close()
+	if err != nil {
+		t.Fatalf("failed to close response body")
 	}
 	if resp.StatusCode != 200 {
 		t.Errorf("expected status %d, got status %d", http.StatusOK, resp.StatusCode)
@@ -188,6 +215,10 @@ func TestGeyFavouriteFilms(t *testing.T) {
 		t.Fatalf("unable to read response body")
 		return
 	}
+	err = resp.Body.Close()
+	if err != nil {
+		t.Fatalf("failed to close response body")
+	}
 	if resp.StatusCode != 500 {
 		t.Errorf("expected status %d, got status %d", http.StatusInternalServerError, resp.StatusCode)
 		return
@@ -209,6 +240,10 @@ func TestGeyFavouriteFilms(t *testing.T) {
 		t.Fatalf("unable to read response body")
 		return
 	}
+	err = resp.Body.Close()
+	if err != nil {
+		t.Fatalf("failed to close response body")
+	}
 	if resp.StatusCode != 500 {
 		t.Errorf("expected status %d, got status %d", http.StatusInternalServerError, resp.StatusCode)
 		return
@@ -224,7 +259,7 @@ func TestGeyFavouriteFilms(t *testing.T) {
 			MinAge:        12,
 			Country:       "USA",
 			ProducerName:  "Ivan",
-			DateOfRelease: time.Now(),
+			DateOfRelease: "2012-12-12",
 		},
 	}
 
@@ -241,6 +276,10 @@ func TestGeyFavouriteFilms(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unable to read response body")
 		return
+	}
+	err = resp.Body.Close()
+	if err != nil {
+		t.Fatalf("failed to close response body")
 	}
 	if resp.StatusCode != 200 {
 		t.Errorf("expected status %d, got status %d", http.StatusOK, resp.StatusCode)
@@ -267,6 +306,10 @@ func TestAddFavouriteFilm(t *testing.T) {
 		t.Fatalf("unable to read response body")
 		return
 	}
+	err = resp.Body.Close()
+	if err != nil {
+		t.Fatalf("failed to close response body")
+	}
 	if resp.StatusCode != 500 {
 		t.Errorf("expected status %d, got status %d", http.StatusInternalServerError, resp.StatusCode)
 		return
@@ -286,6 +329,10 @@ func TestAddFavouriteFilm(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unable to read response body")
 		return
+	}
+	err = resp.Body.Close()
+	if err != nil {
+		t.Fatalf("failed to close response body")
 	}
 	if resp.StatusCode != 400 {
 		t.Errorf("expected status %d, got status %d", http.StatusBadRequest, resp.StatusCode)
@@ -312,6 +359,10 @@ func TestAddFavouriteFilm(t *testing.T) {
 		t.Fatalf("unable to read response body")
 		return
 	}
+	err = resp.Body.Close()
+	if err != nil {
+		t.Fatalf("failed to close response body")
+	}
 	if resp.StatusCode != 404 {
 		t.Errorf("expected status %d, got status %d", http.StatusNotFound, resp.StatusCode)
 		return
@@ -332,6 +383,10 @@ func TestAddFavouriteFilm(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unable to read response body")
 		return
+	}
+	err = resp.Body.Close()
+	if err != nil {
+		t.Fatalf("failed to close response body")
 	}
 	if resp.StatusCode != 500 {
 		t.Errorf("expected status %d, got status %d", http.StatusInternalServerError, resp.StatusCode)
@@ -354,6 +409,10 @@ func TestAddFavouriteFilm(t *testing.T) {
 		t.Fatalf("unable to read response body")
 		return
 	}
+	err = resp.Body.Close()
+	if err != nil {
+		t.Fatalf("failed to close response body")
+	}
 	if resp.StatusCode != 200 {
 		t.Errorf("expected status %d, got status %d", http.StatusOK, resp.StatusCode)
 		return
@@ -374,6 +433,10 @@ func TestAddFavouriteFilm(t *testing.T) {
 	if err != nil {
 		t.Fatalf("unable to read response body")
 		return
+	}
+	err = resp.Body.Close()
+	if err != nil {
+		t.Fatalf("failed to close response body")
 	}
 	if resp.StatusCode != 200 {
 		t.Errorf("expected status %d, got status %d", http.StatusOK, resp.StatusCode)
