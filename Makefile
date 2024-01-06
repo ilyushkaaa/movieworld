@@ -9,3 +9,8 @@ lint:
 	chmod +x run_lint.sh
 	./run_lint.sh
 
+
+.PHONY: test
+test:
+	go test ./app/delivery/handlers
+
