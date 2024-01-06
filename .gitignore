@@ -1,5 +1,7 @@
 .idea
 .env
+service_review/.env
+service_auth/.env
 app/delivery/handlers/cover.out
 app/delivery/handlers/cover.html
 
