@@ -14,5 +14,6 @@ lint:
 test:
 	go test ./app/delivery/handlers
 	go test ./app/films/usecase
+	go test ./app/actors/usecase
 
 
