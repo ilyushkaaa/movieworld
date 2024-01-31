@@ -32,6 +32,7 @@ message Review {
   uint32 mark = 2;
   string comment = 3;
   User author = 4;
+  FilmID filmID = 5;
 }
 
 message Reviews {

@@ -6,21 +6,18 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/streadway/amqp"
 	"go.uber.org/zap"
-	"google.golang.org/grpc"
-	review "kinopoisk/service_review/proto"
-	reviewservicerepo "kinopoisk/service_review/repo/mysql"
-	reviewserviceusecse "kinopoisk/service_review/usecase"
+	ratingservicerepo "kinopoisk/service_rating/repo/mysql"
+	ratingserviceusecase "kinopoisk/service_rating/usecase"
 	"log"
-	"net"
 	"os"
+	"sync"
 	"time"
-
-	_ "github.com/go-sql-driver/mysql"
 )
 
 const (
-	maxDBConnections  = 10
-	maxPingDBAttempts = 60
+	ChangeRatingQueueName = "change_rating"
+	maxDBConnections      = 10
+	maxPingDBAttempts     = 60
 )
 
 func openMySQLConnection() (*sql.DB, error) {
@@ -64,9 +61,9 @@ func main() {
 			log.Printf("error in logger sync")
 		}
 	}()
-	rabbitAddr := flag.String("addr", "amqp://guest:guest@127.0.0.1:5672/", "rabbit addr")
 	var rabbitConn *amqp.Connection
 	var rabbitChan *amqp.Channel
+	rabbitAddr := flag.String("addr", "amqp://guest:guest@rabbitmq:5672/", "rabbit addr")
 	flag.Parse()
 	rabbitConn, err = amqp.Dial(*rabbitAddr)
 	if err != nil {
@@ -83,20 +80,39 @@ func main() {
 		}
 	}(rabbitChan)
 
-	q, err := rabbitChan.QueueDeclare(
-		reviewserviceusecse.ChangeRatingQueueName, // name
-		true,  // durable
-		false, // delete when unused
-		false, // exclusive
-		false, // no-wait
-		nil,   // arguments
+	_, err = rabbitChan.QueueDeclare(
+		ChangeRatingQueueName, // name
+		true,                  // durable
+		false,                 // delete when unused
+		false,                 // exclusive
+		false,                 // no-wait
+		nil,                   // arguments
 	)
 	if err != nil {
 		logger.Fatalf("can not init queue: %s", err)
 	}
-	logger.Infof("queue %s have %d msg and %d consumers\n",
-		q.Name, q.Messages, q.Consumers)
-
+	err = rabbitChan.Qos(
+		1,     // prefetch count
+		0,     // prefetch size
+		false, // global
+	)
+	if err != nil {
+		logger.Fatalf("can not set QoS: %s", err)
+	}
+	tasks, err := rabbitChan.Consume(
+		ChangeRatingQueueName, // queue
+		"",                    // consumer
+		false,                 // auto-ack
+		false,                 // exclusive
+		false,                 // no-local
+		false,                 // no-wait
+		nil,                   // args
+	)
+	if err != nil {
+		logger.Fatalf("can not init queue consumer: %s", err)
+	}
+	wg := &sync.WaitGroup{}
+	wg.Add(1)
 	envFilePath := "./.env"
 	err = godotenv.Load(envFilePath)
 	if err != nil {
@@ -114,17 +130,9 @@ func main() {
 			logger.Errorf("error in close connection to mysql: %s", err)
 		}
 	}()
-
-	lis, err := net.Listen("tcp", ":8081")
-	if err != nil {
-		logger.Fatalf("can not listen port 8081: %s", err)
-	}
-	server := grpc.NewServer()
-	reviewRepo := reviewservicerepo.NewReviewRepoMySQL(mySQLDb, logger)
-	review.RegisterReviewMakerServer(server, reviewserviceusecse.NewReviewGRPCServer(reviewRepo, rabbitChan, logger))
-	logger.Info("starting server at :8081")
-	err = server.Serve(lis)
-	if err != nil {
-		logger.Fatalf("error in serving server on port 8081 %s", err)
-	}
+	ratingChangerDB := ratingservicerepo.NewRatingChangerMySQL(mySQLDb, logger)
+	ratingChanger := ratingserviceusecase.NewRatingChangerApp(logger, ratingChangerDB)
+	go ratingChanger.ChangeRating(tasks)
+	logger.Infof("worker started")
+	wg.Wait()
 }

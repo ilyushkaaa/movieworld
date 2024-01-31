@@ -15,9 +15,6 @@ type ReviewRepo interface {
 	UpdateReviewRepo(reviewToUpdate *review.Review) (*review.Review, error)
 	GetReviewByFilmUser(filmID, userID uint64) (uint64, error)
 	GetUserReviewByID(reviewID, userID uint64) (*review.Review, error)
-	ChangeRatingAfterDeleteReview(oldReview *review.Review, reviewID uint64)
-	ChangeRatingAfterUpdateReview(oldReview, newReview *review.Review, reviewID uint64)
-	ChangeRatingAddReview(newReview *review.Review, reviewID uint64)
 }
 
 type ReviewRepoMySQL struct {
@@ -146,9 +143,10 @@ func (r *ReviewRepoMySQL) GetReviewByFilmUser(filmID, userID uint64) (uint64, er
 func (r *ReviewRepoMySQL) GetUserReviewByID(reviewID, userID uint64) (*review.Review, error) {
 	foundReview := &review.Review{}
 	foundReview.ID = &review.ReviewID{}
+	foundReview.FilmID = &review.FilmID{}
 	err := r.db.
-		QueryRow("SELECT id, mark from reviews WHERE id = ? AND user_id = ?", reviewID, userID).
-		Scan(&foundReview.ID.ID, &foundReview.Mark)
+		QueryRow("SELECT id, mark, film_id from reviews WHERE id = ? AND user_id = ?", reviewID, userID).
+		Scan(&foundReview.ID.ID, &foundReview.Mark, &foundReview.FilmID.ID)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, errorreview.ErrorNoReview
@@ -157,50 +155,4 @@ func (r *ReviewRepoMySQL) GetUserReviewByID(reviewID, userID uint64) (*review.Re
 		return nil, err
 	}
 	return foundReview, nil
-}
-
-func (r *ReviewRepoMySQL) ChangeRatingAfterDeleteReview(oldReview *review.Review, reviewID uint64) {
-	_, err := r.db.Exec(
-		`UPDATE films 
-                SET 
-                   sum_mark = sum_mark - ?,
-                num_of_marks = num_of_marks - 1,
-                rating = CASE 
-                              WHEN num_of_marks > 1 THEN (sum_mark - ?) / (num_of_marks - 1)
-                            ELSE 0
-                          END
-                WHERE id IN (SELECT film_id FROM reviews WHERE id = ?)`,
-		oldReview.Mark,
-		oldReview.Mark,
-		reviewID,
-	)
-	if err != nil {
-		r.logger.Errorf("error in changing rating after delete review")
-	}
-}
-
-func (r *ReviewRepoMySQL) ChangeRatingAfterUpdateReview(oldReview, newReview *review.Review, reviewID uint64) {
-	_, err := r.db.Exec(
-		"UPDATE films SET sum_mark = sum_mark + ? - ?, rating = (sum_mark + ? - ?) / num_of_marks WHERE id in (SELECT film_id from reviews WHERE id = ?)",
-		newReview.Mark,
-		oldReview.Mark,
-		newReview.Mark,
-		oldReview.Mark,
-		reviewID,
-	)
-	if err != nil {
-		r.logger.Errorf("error in changing rating after update review: %s", err)
-	}
-}
-
-func (r *ReviewRepoMySQL) ChangeRatingAddReview(newReview *review.Review, reviewID uint64) {
-	_, err := r.db.Exec(
-		"UPDATE films SET sum_mark = sum_mark + ?, num_of_marks = num_of_marks + 1, rating = (sum_mark + ?) / (num_of_marks + 1) WHERE id in (SELECT film_id from reviews WHERE id = ?)",
-		newReview.Mark,
-		newReview.Mark,
-		reviewID,
-	)
-	if err != nil {
-		r.logger.Errorf("error in changing rating after add review")
-	}
 }
