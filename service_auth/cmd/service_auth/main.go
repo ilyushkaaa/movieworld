@@ -108,7 +108,7 @@ func main() {
 	server := grpc.NewServer()
 	userRepo := userrepo.NewUserRepoMySQL(mySQLDb)
 	sessionRepo := sessionrepo.NewSessionRepoRedis(redisConn)
-	auth.RegisterAuthMakerServer(server, authserviceusecase.NewAuthGRPCServer(userRepo, sessionRepo))
+	auth.RegisterAuthMakerServer(server, authserviceusecase.NewAuthGRPCServer(userRepo, sessionRepo, logger))
 	logger.Info("starting server at :8082")
 	err = server.Serve(lis)
 	if err != nil {
