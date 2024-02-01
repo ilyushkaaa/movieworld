@@ -15,7 +15,8 @@ func RequestInitMiddleware(next http.Handler) http.Handler {
 		if err != nil {
 			WriteNoLoggerResponse(w)
 		}
-		myLogger = myLogger.With(zap.String("request-id", uuid.New().String()))
+		requestID := uuid.New().String()
+		myLogger = myLogger.With(zap.String("request-id", requestID))
 		ctx := r.Context()
 		ctx = context.WithValue(ctx, MyLoggerKey, myLogger)
 		myLogger.Infof("request init middleware call")

@@ -55,7 +55,7 @@ func TestGetReviewsForFilm(t *testing.T) {
 
 	// usecase returns error
 	var filmID uint64 = 1
-	testUseCase.EXPECT().GetFilmReviews(filmID).Return(nil, fmt.Errorf("error"))
+	testUseCase.EXPECT().GetFilmReviews(filmID, logger).Return(nil, fmt.Errorf("error"))
 	request = httptest.NewRequest(http.MethodGet, "/review/1", nil)
 	request = mux.SetURLVars(request, map[string]string{"FILM_ID": "1"})
 	ctx = request.Context()
@@ -89,7 +89,7 @@ func TestGetReviewsForFilm(t *testing.T) {
 			},
 		},
 	}
-	testUseCase.EXPECT().GetFilmReviews(filmID).Return(reviews, nil)
+	testUseCase.EXPECT().GetFilmReviews(filmID, logger).Return(reviews, nil)
 	request = httptest.NewRequest(http.MethodGet, "/review/1", nil)
 	request = mux.SetURLVars(request, map[string]string{"FILM_ID": "1"})
 	ctx = request.Context()
@@ -248,7 +248,7 @@ func TestAddReview(t *testing.T) {
 		Mark:    10,
 		Comment: "very interesting film",
 	}
-	testUseCase.EXPECT().NewReview(newReview, filmID, author).Return(nil, fmt.Errorf("error"))
+	testUseCase.EXPECT().NewReview(newReview, filmID, author, logger).Return(nil, fmt.Errorf("error"))
 	request = httptest.NewRequest(http.MethodPost, "/review/1", strings.NewReader(`{"mark": 10,"comment":"very interesting film"}`))
 	request = mux.SetURLVars(request, map[string]string{"FILM_ID": "1"})
 	ctx = request.Context()
@@ -271,7 +271,7 @@ func TestAddReview(t *testing.T) {
 	}
 
 	// no film with such id
-	testUseCase.EXPECT().NewReview(newReview, filmID, author).Return(nil, errorapp.ErrorNoFilm)
+	testUseCase.EXPECT().NewReview(newReview, filmID, author, logger).Return(nil, errorapp.ErrorNoFilm)
 	request = httptest.NewRequest(http.MethodPost, "/review/1", strings.NewReader(`{"mark": 10,"comment":"very interesting film"}`))
 	request = mux.SetURLVars(request, map[string]string{"FILM_ID": "1"})
 	ctx = request.Context()
@@ -294,7 +294,7 @@ func TestAddReview(t *testing.T) {
 	}
 
 	// film has been already reviewed
-	testUseCase.EXPECT().NewReview(newReview, filmID, author).Return(nil, nil)
+	testUseCase.EXPECT().NewReview(newReview, filmID, author, logger).Return(nil, nil)
 	request = httptest.NewRequest(http.MethodPost, "/review/1", strings.NewReader(`{"mark": 10,"comment":"very interesting film"}`))
 	request = mux.SetURLVars(request, map[string]string{"FILM_ID": "1"})
 	ctx = request.Context()
@@ -318,7 +318,7 @@ func TestAddReview(t *testing.T) {
 
 	// all is ok
 	addedReview := &entity.Review{}
-	testUseCase.EXPECT().NewReview(newReview, filmID, author).Return(addedReview, nil)
+	testUseCase.EXPECT().NewReview(newReview, filmID, author, logger).Return(addedReview, nil)
 	request = httptest.NewRequest(http.MethodPost, "/review/1", strings.NewReader(`{"mark": 10,"comment":"very interesting film"}`))
 	request = mux.SetURLVars(request, map[string]string{"FILM_ID": "1"})
 	ctx = request.Context()

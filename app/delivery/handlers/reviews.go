@@ -41,7 +41,7 @@ func (rh *ReviewHandler) GetReviewsForFilm(w http.ResponseWriter, r *http.Reques
 		delivery.WriteResponse(logger, w, []byte(errText), http.StatusBadRequest)
 		return
 	}
-	reviews, err := rh.ReviewUseCases.GetFilmReviews(filmIDInt)
+	reviews, err := rh.ReviewUseCases.GetFilmReviews(filmIDInt, logger)
 	if err != nil {
 		errText := fmt.Sprintf(`{"message": "internal server error: %s"}`, err)
 		delivery.WriteResponse(logger, w, []byte(errText), http.StatusInternalServerError)
@@ -101,7 +101,7 @@ func (rh *ReviewHandler) AddReview(w http.ResponseWriter, r *http.Request) {
 		delivery.WriteResponse(logger, w, errorsJSON, http.StatusUnprocessableEntity)
 		return
 	}
-	addedReview, err := rh.ReviewUseCases.NewReview(reviewDTO, filmIDInt, user)
+	addedReview, err := rh.ReviewUseCases.NewReview(reviewDTO, filmIDInt, user, logger)
 	if errors.Is(err, errorapp.ErrorNoFilm) {
 		errText := fmt.Sprintf(`{"message": "no film with id: %d"}`, filmIDInt)
 		delivery.WriteResponse(logger, w, []byte(errText), http.StatusNotFound)
@@ -146,7 +146,7 @@ func (rh *ReviewHandler) DeleteReview(w http.ResponseWriter, r *http.Request) {
 		delivery.WriteResponse(logger, w, []byte(errText), http.StatusBadRequest)
 		return
 	}
-	wasDeleted, err := rh.ReviewUseCases.DeleteReview(reviewIDInt, user.ID)
+	wasDeleted, err := rh.ReviewUseCases.DeleteReview(reviewIDInt, user.ID, logger)
 	if err != nil {
 		errText := fmt.Sprintf(`{"message": "internal server error: %s"}`, err)
 		delivery.WriteResponse(logger, w, []byte(errText), http.StatusInternalServerError)
@@ -205,7 +205,7 @@ func (rh *ReviewHandler) UpdateReview(w http.ResponseWriter, r *http.Request) {
 		delivery.WriteResponse(logger, w, errorsJSON, http.StatusUnprocessableEntity)
 		return
 	}
-	updatedReview, err := rh.ReviewUseCases.UpdateReview(reviewDTO, reviewIDInt, user)
+	updatedReview, err := rh.ReviewUseCases.UpdateReview(reviewDTO, reviewIDInt, user, logger)
 	if err != nil {
 		errText := fmt.Sprintf(`{"message": "internal server error: %s"}`, err)
 		delivery.WriteResponse(logger, w, []byte(errText), http.StatusInternalServerError)

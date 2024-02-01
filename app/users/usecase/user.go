@@ -31,12 +31,12 @@ func NewAuthGRPCClient(grpcClient auth.AuthMakerClient) *AuthGRPCClient {
 }
 
 func (a *AuthGRPCClient) Login(username, password string, logger *zap.SugaredLogger) (*entity.User, error) {
-	ctx := context.WithValue(context.Background(), MyLoggerKey, logger)
-	loggedInUser, err := a.grpcClient.Login(ctx, &auth.AuthData{
+	loggedInUser, err := a.grpcClient.Login(context.Background(), &auth.AuthData{
 		Username: username,
 		Password: password,
 	})
 	if err != nil {
+		logger.Errorf("error in login: %s", err)
 		return nil, err
 	}
 	if loggedInUser.ID == 0 {
@@ -47,12 +47,12 @@ func (a *AuthGRPCClient) Login(username, password string, logger *zap.SugaredLog
 }
 
 func (a *AuthGRPCClient) Register(username, password string, logger *zap.SugaredLogger) (*entity.User, error) {
-	ctx := context.WithValue(context.Background(), MyLoggerKey, logger)
-	newUser, err := a.grpcClient.Register(ctx, &auth.AuthData{
+	newUser, err := a.grpcClient.Register(context.Background(), &auth.AuthData{
 		Username: username,
 		Password: password,
 	})
 	if err != nil {
+		logger.Errorf("error in register: %s", err)
 		return nil, err
 	}
 	if newUser.ID == 0 {
@@ -64,20 +64,20 @@ func (a *AuthGRPCClient) Register(username, password string, logger *zap.Sugared
 
 func (a *AuthGRPCClient) CreateSession(user *entity.User, logger *zap.SugaredLogger) (string, error) {
 	userGRPC := getGRPCUserFromEntityUser(user)
-	ctx := context.WithValue(context.Background(), MyLoggerKey, logger)
-	token, err := a.grpcClient.CreateSession(ctx, userGRPC)
+	token, err := a.grpcClient.CreateSession(context.Background(), userGRPC)
 	if err != nil {
+		logger.Errorf("error in creating session: %s", err)
 		return "", err
 	}
 	return token.Token, nil
 }
 
 func (a *AuthGRPCClient) GetSession(token string, logger *zap.SugaredLogger) (*entity.Session, error) {
-	ctx := context.WithValue(context.Background(), MyLoggerKey, logger)
-	session, err := a.grpcClient.GetSession(ctx, &auth.Token{
+	session, err := a.grpcClient.GetSession(context.Background(), &auth.Token{
 		Token: token,
 	})
 	if err != nil {
+		logger.Errorf("error in getting session: %s", err)
 		return nil, err
 	}
 	sessionApp := getSessionFromGRPCStruct(session)
@@ -85,11 +85,11 @@ func (a *AuthGRPCClient) GetSession(token string, logger *zap.SugaredLogger) (*e
 }
 
 func (a *AuthGRPCClient) DeleteSession(token string, logger *zap.SugaredLogger) (bool, error) {
-	ctx := context.WithValue(context.Background(), MyLoggerKey, logger)
-	isDeleted, err := a.grpcClient.DeleteSession(ctx, &auth.Token{
+	isDeleted, err := a.grpcClient.DeleteSession(context.Background(), &auth.Token{
 		Token: token,
 	})
 	if err != nil {
+		logger.Errorf("error in deleting session: %s", err)
 		return false, err
 	}
 	if !isDeleted.IsDeleted {

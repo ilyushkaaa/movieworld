@@ -25,13 +25,13 @@ func NewSearchRepoMySQL(db *sql.DB, logger *zap.SugaredLogger) *SearchRepoMySQL 
 }
 
 func (sr *SearchRepoMySQL) MakeSearchFilms(inputStr string) ([]*entity.Film, error) {
-	rows, err := sr.db.Query(`SELECT f.id, f.name, f.description, f.duration, f.min_age, f.country, 
-                                           f.producer_name, f.date_of_release, f.num_of_marks, f.rating 
-                                    FROM films f
-									WHERE LOWER(f.name) 
-									LIKE LOWER('%' || $1 || '%')
-									OR LOWER(f.producer_name)
-                                    LIKE LOWER('%' || $2 || '%')`, inputStr, inputStr)
+	rows, err := sr.db.Query(`
+    SELECT id, name, description, duration, min_age, country, 
+           producer_name, date_of_release, num_of_marks, rating 
+    FROM films
+    WHERE LOWER(name) LIKE LOWER(CONCAT('%', ?, '%'))
+       OR LOWER(producer_name) LIKE LOWER(CONCAT('%', ?, '%'))`, inputStr, inputStr)
+
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			sr.logger.Errorf("no films found for keyword: %s", err)
@@ -59,11 +59,12 @@ func (sr *SearchRepoMySQL) MakeSearchFilms(inputStr string) ([]*entity.Film, err
 }
 
 func (sr *SearchRepoMySQL) MakeSearchActors(inputStr string) ([]*entity.Actor, error) {
-	rows, err := sr.db.Query(`SELECT id, name, surname, nationality, birthday FROM actors
-									WHERE LOWER(name || ' ' || surname) 
-									LIKE LOWER('%' || $1 || '%')
-									OR LOWER(surname || ' ' || name)
-                                    LIKE LOWER('%' || $2 || '%')`, inputStr, inputStr)
+	rows, err := sr.db.Query(`
+    SELECT id, name, surname, nationality, birthday 
+    FROM actors
+    WHERE LOWER(CONCAT(name, ' ', surname)) LIKE LOWER(CONCAT('%', ?, '%'))
+       OR LOWER(CONCAT(surname, ' ', name)) LIKE LOWER(CONCAT('%', ?, '%'))`, inputStr, inputStr)
+
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			sr.logger.Errorf("no actors found for keyword: %s", err)

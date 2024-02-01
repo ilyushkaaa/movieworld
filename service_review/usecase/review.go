@@ -84,8 +84,9 @@ func (rs *ReviewGRPCServer) NewReview(ctx context.Context, in *review.NewReviewD
 		return &review.Review{}, err
 	}
 	changeRatingInfo := &ChangeRatingInfo{
-		NewMark:  newReview.Mark,
-		ReviewID: newReview.ID.ID,
+		ChangeType: "Add",
+		NewMark:    newReview.Mark,
+		ReviewID:   newReview.ID.ID,
 	}
 	err = rs.putChangeRatingTaskToQueue(changeRatingInfo)
 	if err != nil {
@@ -125,8 +126,9 @@ func (rs *ReviewGRPCServer) DeleteReview(ctx context.Context, in *review.DeleteR
 	}
 
 	changeRatingInfo := &ChangeRatingInfo{
-		OldMark: rev.Mark,
-		FilmID:  rev.FilmID.ID,
+		ChangeType: "Delete",
+		OldMark:    rev.Mark,
+		FilmID:     rev.FilmID.ID,
 	}
 	err = rs.putChangeRatingTaskToQueue(changeRatingInfo)
 	if err != nil {
@@ -162,9 +164,10 @@ func (rs *ReviewGRPCServer) UpdateReview(ctx context.Context, in *review.UpdateR
 		return &review.Review{}, err
 	}
 	changeRatingInfo := &ChangeRatingInfo{
-		OldMark:  oldReview.Mark,
-		NewMark:  updatedReview.Mark,
-		ReviewID: in.Review.ID.ID,
+		ChangeType: "Update",
+		OldMark:    oldReview.Mark,
+		NewMark:    updatedReview.Mark,
+		ReviewID:   in.Review.ID.ID,
 	}
 	err = rs.putChangeRatingTaskToQueue(changeRatingInfo)
 	if err != nil {
