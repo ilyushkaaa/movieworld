@@ -24,10 +24,18 @@ func NewSearchUseCaseStruct(searchRepo searchrepo.SearchRepo) *SearchUseCaseStru
 }
 
 func (sr *SearchUseCaseStruct) MakeSearch(inputStr string, logger *zap.SugaredLogger) (*entity.SearchResult, error) {
-	result, err := sr.searchRepo.MakeSearchDB(inputStr)
+	films, err := sr.searchRepo.MakeSearchFilms(inputStr)
 	if err != nil {
-		logger.Errorf("error in search database method: %s", err)
+		logger.Errorf("error in search films in db: %s", err)
 		return nil, err
 	}
-	return result, nil
+	actors, err := sr.searchRepo.MakeSearchActors(inputStr)
+	if err != nil {
+		logger.Errorf("error in search actors in db: %s", err)
+		return nil, err
+	}
+	return &entity.SearchResult{
+		Films:  films,
+		Actors: actors,
+	}, nil
 }

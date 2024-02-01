@@ -41,6 +41,11 @@ func (sh *SearchHandler) MakeSearch(w http.ResponseWriter, r *http.Request) {
 		delivery.WriteResponse(logger, w, []byte(`{"message":"search error"}`), http.StatusInternalServerError)
 		return
 	}
+	if len(result.Actors) == 0 && len(result.Films) == 0 {
+		logger.Infof("no films and actors for search %s", searchData)
+		delivery.WriteResponse(logger, w, []byte(`{"message":"search found nothing"}`), http.StatusNotFound)
+		return
+	}
 	resultJSON, err := json.Marshal(result)
 	if err != nil {
 		logger.Errorf("error in json coding result: %s", err)
