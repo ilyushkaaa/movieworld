@@ -16,6 +16,8 @@ import (
 	ratelimiterrepo "kinopoisk/app/ratelimiter/repo/redis"
 	ratelimiterusecase "kinopoisk/app/ratelimiter/usecase"
 	reviewusecase "kinopoisk/app/reviews/usecase"
+	searchrepo "kinopoisk/app/search/repo/mysql"
+	searchusecase "kinopoisk/app/search/usecase"
 	userusecase "kinopoisk/app/users/usecase"
 	auth "kinopoisk/service_auth/proto"
 	review "kinopoisk/service_review/proto"
@@ -157,10 +159,14 @@ func main() {
 	rateLimiterRepo := ratelimiterrepo.NewRateLimiterRepoRedis(redisConn, logger)
 	rateLimiterUseCase := ratelimiterusecase.NewRateLimiterUseCaseStruct(rateLimiterRepo)
 
+	searchRepo := searchrepo.NewSearchRepoMySQL(mySQLDb, logger)
+	searchUseCase := searchusecase.NewSearchUseCaseStruct(searchRepo)
+
 	authHandler := handlers.NewUserHandler(authUseCase)
 	reviewHandler := handlers.NewReviewHandler(reviewUseCase)
 	filmHandler := handlers.NewFilmHandler(filmUseCase)
 	actorHandler := handlers.NewActorHandler(actorUseCase)
+	searchHandler := handlers.NewSearchHandler(searchUseCase)
 
 	router := mux.NewRouter()
 	router.HandleFunc("/actors", actorHandler.GetActors).Methods(http.MethodGet)
@@ -179,6 +185,8 @@ func main() {
 	router.HandleFunc("/register", authHandler.Register).Methods(http.MethodPost)
 
 	router.HandleFunc("/review/{FILM_ID}", reviewHandler.GetReviewsForFilm).Methods(http.MethodGet)
+
+	router.HandleFunc("/search/{DATA}", searchHandler.MakeSearch).Methods(http.MethodGet)
 
 	checkAuthRouter := mux.NewRouter()
 	router.Handle("/films/favourite", middleware.AuthMiddleware(authUseCase, checkAuthRouter)).Methods(http.MethodGet)

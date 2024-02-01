@@ -27,3 +27,6 @@ review:
 2. DELETE /review/{REVIEW_ID} - удалить отзыв
 3. PUT /review/{REVIEW_ID} - изменить отзыв
 4. GET /review/{FILM_ID} - получение отзывов о фильме
+
+search of actors and films
+1. GET /search/{DATA} - регистронезависимый поиск актеров и фильмов, где название фильма начинается с DATA а для актера начало либо имя + фамилия либо фамилия + имя
