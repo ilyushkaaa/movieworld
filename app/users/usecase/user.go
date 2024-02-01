@@ -2,17 +2,19 @@ package userusecase
 
 import (
 	"context"
+	"go.uber.org/zap"
 	"kinopoisk/app/entity"
 	errorapp "kinopoisk/app/errors"
+	"kinopoisk/app/middleware"
 	auth "kinopoisk/service_auth/proto"
 )
 
 type UserUseCase interface {
-	Login(username, password string) (*entity.User, error)
-	Register(username, password string) (*entity.User, error)
-	CreateSession(user *entity.User) (string, error)
-	GetSession(token string) (*entity.Session, error)
-	DeleteSession(token string) (bool, error)
+	Login(username, password string, logger *zap.SugaredLogger) (*entity.User, error)
+	Register(username, password string, logger *zap.SugaredLogger) (*entity.User, error)
+	CreateSession(user *entity.User, logger *zap.SugaredLogger) (string, error)
+	GetSession(token string, logger *zap.SugaredLogger) (*entity.Session, error)
+	DeleteSession(token string, logger *zap.SugaredLogger) (bool, error)
 }
 
 type AuthGRPCClient struct {
@@ -25,8 +27,9 @@ func NewAuthGRPCClient(grpcClient auth.AuthMakerClient) *AuthGRPCClient {
 	}
 }
 
-func (a *AuthGRPCClient) Login(username, password string) (*entity.User, error) {
-	loggedInUser, err := a.grpcClient.Login(context.Background(), &auth.AuthData{
+func (a *AuthGRPCClient) Login(username, password string, logger *zap.SugaredLogger) (*entity.User, error) {
+	ctx := context.WithValue(context.Background(), middleware.MyLoggerKey, logger)
+	loggedInUser, err := a.grpcClient.Login(ctx, &auth.AuthData{
 		Username: username,
 		Password: password,
 	})
@@ -40,8 +43,9 @@ func (a *AuthGRPCClient) Login(username, password string) (*entity.User, error) 
 	return newUserApp, nil
 }
 
-func (a *AuthGRPCClient) Register(username, password string) (*entity.User, error) {
-	newUser, err := a.grpcClient.Register(context.Background(), &auth.AuthData{
+func (a *AuthGRPCClient) Register(username, password string, logger *zap.SugaredLogger) (*entity.User, error) {
+	ctx := context.WithValue(context.Background(), middleware.MyLoggerKey, logger)
+	newUser, err := a.grpcClient.Register(ctx, &auth.AuthData{
 		Username: username,
 		Password: password,
 	})
@@ -55,17 +59,19 @@ func (a *AuthGRPCClient) Register(username, password string) (*entity.User, erro
 	return newUserApp, nil
 }
 
-func (a *AuthGRPCClient) CreateSession(user *entity.User) (string, error) {
+func (a *AuthGRPCClient) CreateSession(user *entity.User, logger *zap.SugaredLogger) (string, error) {
 	userGRPC := getGRPCUserFromEntityUser(user)
-	token, err := a.grpcClient.CreateSession(context.Background(), userGRPC)
+	ctx := context.WithValue(context.Background(), middleware.MyLoggerKey, logger)
+	token, err := a.grpcClient.CreateSession(ctx, userGRPC)
 	if err != nil {
 		return "", err
 	}
 	return token.Token, nil
 }
 
-func (a *AuthGRPCClient) GetSession(token string) (*entity.Session, error) {
-	session, err := a.grpcClient.GetSession(context.Background(), &auth.Token{
+func (a *AuthGRPCClient) GetSession(token string, logger *zap.SugaredLogger) (*entity.Session, error) {
+	ctx := context.WithValue(context.Background(), middleware.MyLoggerKey, logger)
+	session, err := a.grpcClient.GetSession(ctx, &auth.Token{
 		Token: token,
 	})
 	if err != nil {
@@ -75,8 +81,9 @@ func (a *AuthGRPCClient) GetSession(token string) (*entity.Session, error) {
 	return sessionApp, nil
 }
 
-func (a *AuthGRPCClient) DeleteSession(token string) (bool, error) {
-	isDeleted, err := a.grpcClient.DeleteSession(context.Background(), &auth.Token{
+func (a *AuthGRPCClient) DeleteSession(token string, logger *zap.SugaredLogger) (bool, error) {
+	ctx := context.WithValue(context.Background(), middleware.MyLoggerKey, logger)
+	isDeleted, err := a.grpcClient.DeleteSession(ctx, &auth.Token{
 		Token: token,
 	})
 	if err != nil {

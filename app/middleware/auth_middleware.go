@@ -35,7 +35,7 @@ func AuthMiddleware(uc userusecase.UserUseCase, next http.Handler) http.Handler 
 			return
 		}
 		tokenValue := strings.TrimPrefix(authHeader, "Bearer ")
-		mySession, err := uc.GetSession(tokenValue)
+		mySession, err := uc.GetSession(tokenValue, logger)
 		if err != nil || mySession.ID == "" {
 			errText := fmt.Sprintf(`{"message": "there is no session for token %s}`, tokenValue)
 			delivery.WriteResponse(logger, w, []byte(errText), http.StatusUnauthorized)

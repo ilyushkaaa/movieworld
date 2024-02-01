@@ -37,7 +37,7 @@ func (uh *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 	if err != nil || userFromLoginForm == nil {
 		return
 	}
-	loggedInUser, err := uh.UserUseCases.Login(userFromLoginForm.Username, userFromLoginForm.Password)
+	loggedInUser, err := uh.UserUseCases.Login(userFromLoginForm.Username, userFromLoginForm.Password, logger)
 
 	if err != nil {
 		errText := fmt.Sprintf(`{"message": "error in getting user by login and password: %s"}`, err)
@@ -63,7 +63,7 @@ func (uh *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 	if err != nil || userFromLoginForm == nil {
 		return
 	}
-	newUser, err := uh.UserUseCases.Register(userFromLoginForm.Username, userFromLoginForm.Password)
+	newUser, err := uh.UserUseCases.Register(userFromLoginForm.Username, userFromLoginForm.Password, logger)
 
 	if errors.Is(err, errorapp.ErrorUserExists) {
 		delivery.WriteResponse(logger, w, []byte(`{"message": "user already exists"}`), http.StatusUnprocessableEntity)
@@ -78,7 +78,7 @@ func (uh *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
 }
 
 func (uh *UserHandler) HandleGetToken(w http.ResponseWriter, newUser *entity.User, logger *zap.SugaredLogger) {
-	token, err := uh.UserUseCases.CreateSession(newUser)
+	token, err := uh.UserUseCases.CreateSession(newUser, logger)
 	if err != nil {
 		errText := fmt.Sprintf(`{"message": "error in session creation: %s"}`, err)
 		delivery.WriteResponse(logger, w, []byte(errText), http.StatusInternalServerError)
@@ -137,7 +137,7 @@ func (uh *UserHandler) Logout(w http.ResponseWriter, r *http.Request) {
 		delivery.WriteResponse(logger, w, []byte(`{"message": "can not cast context value to user"}`), http.StatusInternalServerError)
 		return
 	}
-	isDeleted, err := uh.UserUseCases.DeleteSession(token)
+	isDeleted, err := uh.UserUseCases.DeleteSession(token, logger)
 	if err != nil {
 		errText := fmt.Sprintf(`{"message": "error in logging out: %s"}`, err)
 		delivery.WriteResponse(logger, w, []byte(errText), http.StatusInternalServerError)
