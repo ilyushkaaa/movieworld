@@ -7,6 +7,7 @@ import (
 	"github.com/streadway/amqp"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"kinopoisk/service_review/interceptor"
 	review "kinopoisk/service_review/proto"
 	reviewservicerepo "kinopoisk/service_review/repo/mysql"
 	reviewserviceusecse "kinopoisk/service_review/usecase"
@@ -119,9 +120,11 @@ func main() {
 	if err != nil {
 		logger.Fatalf("can not listen port 8081: %s", err)
 	}
-	server := grpc.NewServer()
+	server := grpc.NewServer(
+		grpc.UnaryInterceptor(interceptor.AccessLogInterceptor),
+	)
 	reviewRepo := reviewservicerepo.NewReviewRepoMySQL(mySQLDb, logger)
-	review.RegisterReviewMakerServer(server, reviewserviceusecse.NewReviewGRPCServer(reviewRepo, rabbitChan, logger))
+	review.RegisterReviewMakerServer(server, reviewserviceusecse.NewReviewGRPCServer(reviewRepo, rabbitChan))
 	logger.Info("starting server at :8081")
 	err = server.Serve(lis)
 	if err != nil {

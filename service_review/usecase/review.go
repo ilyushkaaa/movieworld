@@ -5,8 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"github.com/streadway/amqp"
-	"go.uber.org/zap"
+	errorauth "kinopoisk/service_auth/error"
 	errorreview "kinopoisk/service_review/error"
+	"kinopoisk/service_review/interceptor"
 	review "kinopoisk/service_review/proto"
 	reviewservicerepo "kinopoisk/service_review/repo/mysql"
 	"sync"
@@ -21,7 +22,6 @@ type ReviewGRPCServer struct {
 	ReviewRepo reviewservicerepo.ReviewRepo
 	mu         *sync.RWMutex
 	rabbitChan *amqp.Channel
-	logger     *zap.SugaredLogger
 }
 
 type ChangeRatingInfo struct {
@@ -32,22 +32,25 @@ type ChangeRatingInfo struct {
 	FilmID     uint64
 }
 
-func NewReviewGRPCServer(reviewRepo reviewservicerepo.ReviewRepo, rabbitChan *amqp.Channel, logger *zap.SugaredLogger) *ReviewGRPCServer {
+func NewReviewGRPCServer(reviewRepo reviewservicerepo.ReviewRepo, rabbitChan *amqp.Channel) *ReviewGRPCServer {
 	return &ReviewGRPCServer{
 		UnimplementedReviewMakerServer: review.UnimplementedReviewMakerServer{},
 		ReviewRepo:                     reviewRepo,
 		mu:                             &sync.RWMutex{},
 		rabbitChan:                     rabbitChan,
-		logger:                         logger,
 	}
 }
 
-func (rs *ReviewGRPCServer) GetFilmReviews(_ context.Context, in *review.FilmID) (*review.Reviews, error) {
+func (rs *ReviewGRPCServer) GetFilmReviews(ctx context.Context, in *review.FilmID) (*review.Reviews, error) {
+	logger, err := interceptor.GetLoggerFromContext(ctx)
+	if err != nil {
+		return &review.Reviews{}, errorauth.ErrorNoLogger
+	}
 	rs.mu.RLock()
 	reviews, err := rs.ReviewRepo.GetFilmReviewsRepo(in.GetID())
 	rs.mu.RUnlock()
 	if err != nil {
-		rs.logger.Errorf("error in getting film reviews: %s", err)
+		logger.Errorf("error in getting film reviews: %s", err)
 		return &review.Reviews{}, err
 	}
 	return &review.Reviews{
@@ -55,17 +58,21 @@ func (rs *ReviewGRPCServer) GetFilmReviews(_ context.Context, in *review.FilmID)
 	}, nil
 }
 
-func (rs *ReviewGRPCServer) NewReview(_ context.Context, in *review.NewReviewData) (*review.Review, error) {
+func (rs *ReviewGRPCServer) NewReview(ctx context.Context, in *review.NewReviewData) (*review.Review, error) {
+	logger, err := interceptor.GetLoggerFromContext(ctx)
+	if err != nil {
+		return &review.Review{}, errorauth.ErrorNoLogger
+	}
 	rs.mu.RLock()
-	_, err := rs.ReviewRepo.GetReviewByFilmUser(in.GetFilmID().ID, in.GetUserID().ID)
+	_, err = rs.ReviewRepo.GetReviewByFilmUser(in.GetFilmID().ID, in.GetUserID().ID)
 	rs.mu.RUnlock()
 	if err == nil {
-		rs.logger.Errorf("review from user %d for film %d already exists", in.GetUserID().ID, in.GetFilmID().ID)
+		logger.Errorf("review from user %d for film %d already exists", in.GetUserID().ID, in.GetFilmID().ID)
 		return &review.Review{}, nil
 	}
 	if err != nil {
 		if !errors.Is(err, errorreview.ErrorNoReview) {
-			rs.logger.Errorf("error in getting review by user and film: %s", err)
+			logger.Errorf("error in getting review by user and film: %s", err)
 			return &review.Review{}, err
 		}
 	}
@@ -73,7 +80,7 @@ func (rs *ReviewGRPCServer) NewReview(_ context.Context, in *review.NewReviewDat
 	newReview, err := rs.ReviewRepo.NewReviewRepo(in.GetReview(), in.GetFilmID().ID, in.GetUserID().ID)
 	rs.mu.Unlock()
 	if err != nil {
-		rs.logger.Errorf("error in adding new review: %s", err)
+		logger.Errorf("error in adding new review: %s", err)
 		return &review.Review{}, err
 	}
 	changeRatingInfo := &ChangeRatingInfo{
@@ -82,23 +89,27 @@ func (rs *ReviewGRPCServer) NewReview(_ context.Context, in *review.NewReviewDat
 	}
 	err = rs.putChangeRatingTaskToQueue(changeRatingInfo)
 	if err != nil {
-		rs.logger.Errorf("error in changing rating: %s", err)
+		logger.Errorf("error in changing rating: %s", err)
 	}
 	return newReview, nil
 }
 
-func (rs *ReviewGRPCServer) DeleteReview(_ context.Context, in *review.DeleteReviewData) (*review.DeletedData, error) {
+func (rs *ReviewGRPCServer) DeleteReview(ctx context.Context, in *review.DeleteReviewData) (*review.DeletedData, error) {
+	logger, err := interceptor.GetLoggerFromContext(ctx)
+	if err != nil {
+		return &review.DeletedData{IsDeleted: false}, errorauth.ErrorNoLogger
+	}
 	rs.mu.RLock()
 	rev, err := rs.ReviewRepo.GetUserReviewByID(in.ReviewID.ID, in.UserID.ID)
 	rs.mu.RUnlock()
 	if errors.Is(err, errorreview.ErrorNoReview) {
-		rs.logger.Errorf("no review with id %d and userID: %d", in.ReviewID.ID, in.UserID.ID)
+		logger.Errorf("no review with id %d and userID: %d", in.ReviewID.ID, in.UserID.ID)
 		return &review.DeletedData{
 			IsDeleted: false,
 		}, nil
 	}
 	if err != nil {
-		rs.logger.Errorf("error in getting review by id and user id: %s", err)
+		logger.Errorf("error in getting review by id and user id: %s", err)
 		return &review.DeletedData{
 			IsDeleted: false,
 		}, err
@@ -107,7 +118,7 @@ func (rs *ReviewGRPCServer) DeleteReview(_ context.Context, in *review.DeleteRev
 	isDeleted, err := rs.ReviewRepo.DeleteReviewRepo(rev.ID.ID)
 	rs.mu.Unlock()
 	if err != nil {
-		rs.logger.Errorf("error in deleting review: %s", err)
+		logger.Errorf("error in deleting review: %s", err)
 		return &review.DeletedData{
 			IsDeleted: false,
 		}, err
@@ -119,7 +130,7 @@ func (rs *ReviewGRPCServer) DeleteReview(_ context.Context, in *review.DeleteRev
 	}
 	err = rs.putChangeRatingTaskToQueue(changeRatingInfo)
 	if err != nil {
-		rs.logger.Errorf("error in changing rating: %s", err)
+		logger.Errorf("error in changing rating: %s", err)
 	}
 	return &review.DeletedData{
 		IsDeleted: isDeleted,
@@ -127,23 +138,27 @@ func (rs *ReviewGRPCServer) DeleteReview(_ context.Context, in *review.DeleteRev
 	}, nil
 }
 
-func (rs *ReviewGRPCServer) UpdateReview(_ context.Context, in *review.UpdateReviewData) (*review.Review, error) {
+func (rs *ReviewGRPCServer) UpdateReview(ctx context.Context, in *review.UpdateReviewData) (*review.Review, error) {
+	logger, err := interceptor.GetLoggerFromContext(ctx)
+	if err != nil {
+		return &review.Review{}, errorauth.ErrorNoLogger
+	}
 	rs.mu.RLock()
 	oldReview, err := rs.ReviewRepo.GetUserReviewByID(in.Review.ID.ID, in.UserID.ID)
 	rs.mu.RUnlock()
 	if errors.Is(err, errorreview.ErrorNoReview) {
-		rs.logger.Errorf("no review with id %d and userID %d", in.Review.ID.ID, in.UserID.ID)
+		logger.Errorf("no review with id %d and userID %d", in.Review.ID.ID, in.UserID.ID)
 		return &review.Review{}, nil
 	}
 	if err != nil {
-		rs.logger.Errorf("error in getting review by id and user id: %s", err)
+		logger.Errorf("error in getting review by id and user id: %s", err)
 		return &review.Review{}, err
 	}
 	rs.mu.Lock()
 	updatedReview, err := rs.ReviewRepo.UpdateReviewRepo(in.Review)
 	rs.mu.Unlock()
 	if err != nil {
-		rs.logger.Errorf("error in updating review: %s", err)
+		logger.Errorf("error in updating review: %s", err)
 		return &review.Review{}, err
 	}
 	changeRatingInfo := &ChangeRatingInfo{
@@ -153,7 +168,7 @@ func (rs *ReviewGRPCServer) UpdateReview(_ context.Context, in *review.UpdateRev
 	}
 	err = rs.putChangeRatingTaskToQueue(changeRatingInfo)
 	if err != nil {
-		rs.logger.Errorf("error in changing rating: %s", err)
+		logger.Errorf("error in changing rating: %s", err)
 	}
 	return updatedReview, nil
 }
