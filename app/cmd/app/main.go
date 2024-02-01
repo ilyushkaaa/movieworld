@@ -157,10 +157,10 @@ func main() {
 	rateLimiterRepo := ratelimiterrepo.NewRateLimiterRepoRedis(redisConn, logger)
 	rateLimiterUseCase := ratelimiterusecase.NewRateLimiterUseCaseStruct(rateLimiterRepo)
 
-	authHandler := handlers.NewUserHandler(authUseCase, logger)
-	reviewHandler := handlers.NewReviewHandler(reviewUseCase, logger)
-	filmHandler := handlers.NewFilmHandler(filmUseCase, logger)
-	actorHandler := handlers.NewActorHandler(actorUseCase, logger)
+	authHandler := handlers.NewUserHandler(authUseCase)
+	reviewHandler := handlers.NewReviewHandler(reviewUseCase)
+	filmHandler := handlers.NewFilmHandler(filmUseCase)
+	actorHandler := handlers.NewActorHandler(actorUseCase)
 
 	router := mux.NewRouter()
 	router.HandleFunc("/actors", actorHandler.GetActors).Methods(http.MethodGet)
@@ -181,13 +181,13 @@ func main() {
 	router.HandleFunc("/review/{FILM_ID}", reviewHandler.GetReviewsForFilm).Methods(http.MethodGet)
 
 	checkAuthRouter := mux.NewRouter()
-	router.Handle("/films/favourite", middleware.AuthMiddleware(logger, authUseCase, checkAuthRouter)).Methods(http.MethodGet)
-	router.Handle("/films/favourite/{FILM_ID}", middleware.AuthMiddleware(logger, authUseCase, checkAuthRouter)).Methods(http.MethodPost)
-	router.Handle("/films/favourite/{FILM_ID}", middleware.AuthMiddleware(logger, authUseCase, checkAuthRouter)).Methods(http.MethodDelete)
+	router.Handle("/films/favourite", middleware.AuthMiddleware(authUseCase, checkAuthRouter)).Methods(http.MethodGet)
+	router.Handle("/films/favourite/{FILM_ID}", middleware.AuthMiddleware(authUseCase, checkAuthRouter)).Methods(http.MethodPost)
+	router.Handle("/films/favourite/{FILM_ID}", middleware.AuthMiddleware(authUseCase, checkAuthRouter)).Methods(http.MethodDelete)
 
-	router.Handle("/review/{FILM_ID}", middleware.AuthMiddleware(logger, authUseCase, checkAuthRouter)).Methods(http.MethodPost)
-	router.Handle("/review/{REVIEW_ID}", middleware.AuthMiddleware(logger, authUseCase, checkAuthRouter)).Methods(http.MethodDelete)
-	router.Handle("/review/{REVIEW_ID}", middleware.AuthMiddleware(logger, authUseCase, checkAuthRouter)).Methods(http.MethodPut)
+	router.Handle("/review/{FILM_ID}", middleware.AuthMiddleware(authUseCase, checkAuthRouter)).Methods(http.MethodPost)
+	router.Handle("/review/{REVIEW_ID}", middleware.AuthMiddleware(authUseCase, checkAuthRouter)).Methods(http.MethodDelete)
+	router.Handle("/review/{REVIEW_ID}", middleware.AuthMiddleware(authUseCase, checkAuthRouter)).Methods(http.MethodPut)
 
 	checkAuthRouter.HandleFunc("/films/favourite", filmHandler.GetFavouriteFilms).Methods(http.MethodGet)
 	checkAuthRouter.HandleFunc("/films/favourite/{FILM_ID}", filmHandler.AddFavouriteFilm).Methods(http.MethodPost)
@@ -197,9 +197,10 @@ func main() {
 	checkAuthRouter.HandleFunc("/review/{REVIEW_ID}", reviewHandler.DeleteReview).Methods(http.MethodDelete)
 	checkAuthRouter.HandleFunc("/review/{REVIEW_ID}", reviewHandler.UpdateReview).Methods(http.MethodPut)
 
-	accessLogRouter := middleware.AccessLog(logger, router)
-	errorLogRouter := middleware.ErrorLog(logger, accessLogRouter)
-	mux := middleware.RateLimiterMiddleware(logger, rateLimiterUseCase, errorLogRouter)
+	accessLogRouter := middleware.AccessLog(router)
+	errorLogRouter := middleware.ErrorLog(accessLogRouter)
+	rateLimiterRouter := middleware.RateLimiterMiddleware(rateLimiterUseCase, errorLogRouter)
+	mux := middleware.RequestInitMiddleware(rateLimiterRouter)
 
 	addr := ":8080"
 

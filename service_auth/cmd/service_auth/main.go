@@ -6,6 +6,7 @@ import (
 	"github.com/joho/godotenv"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
+	"kinopoisk/service_auth/interceptor"
 	auth "kinopoisk/service_auth/proto"
 	userrepo "kinopoisk/service_auth/repo/mysql"
 	sessionrepo "kinopoisk/service_auth/repo/redis"
@@ -105,10 +106,12 @@ func main() {
 	if err != nil {
 		logger.Fatalf("can not listen port 8082: %s", err)
 	}
-	server := grpc.NewServer()
+	server := grpc.NewServer(
+		grpc.UnaryInterceptor(interceptor.AccessLogInterceptor),
+	)
 	userRepo := userrepo.NewUserRepoMySQL(mySQLDb)
 	sessionRepo := sessionrepo.NewSessionRepoRedis(redisConn)
-	auth.RegisterAuthMakerServer(server, authserviceusecase.NewAuthGRPCServer(userRepo, sessionRepo, logger))
+	auth.RegisterAuthMakerServer(server, authserviceusecase.NewAuthGRPCServer(userRepo, sessionRepo))
 	logger.Info("starting server at :8082")
 	err = server.Serve(lis)
 	if err != nil {

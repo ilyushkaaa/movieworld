@@ -19,13 +19,16 @@ import (
 func TestGetFilms(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
+	logger := zap.NewNop().Sugar()
 
 	testUseCase := filmusecase.NewMockFilmUseCase(ctrl)
-	testHandler := NewFilmHandler(testUseCase, zap.NewNop().Sugar())
+	testHandler := NewFilmHandler(testUseCase)
 	// unknown query params
 	request := httptest.NewRequest(http.MethodGet, "/films?bad_param=bp", nil)
+	ctx := request.Context()
+	ctx = context.WithValue(ctx, middleware.MyLoggerKey, logger)
 	respWriter := httptest.NewRecorder()
-	testHandler.GetFilms(respWriter, request)
+	testHandler.GetFilms(respWriter, request.WithContext(ctx))
 	resp := respWriter.Result()
 	_, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -44,8 +47,10 @@ func TestGetFilms(t *testing.T) {
 	// usecase returns error
 	testUseCase.EXPECT().GetFilms("Drama", "", "").Return(nil, fmt.Errorf("error"))
 	request = httptest.NewRequest(http.MethodGet, "/films?genre=Drama", nil)
+	ctx = request.Context()
+	ctx = context.WithValue(ctx, middleware.MyLoggerKey, logger)
 	respWriter = httptest.NewRecorder()
-	testHandler.GetFilms(respWriter, request)
+	testHandler.GetFilms(respWriter, request.WithContext(ctx))
 	resp = respWriter.Result()
 	_, err = io.ReadAll(resp.Body)
 	if err != nil {
@@ -76,8 +81,10 @@ func TestGetFilms(t *testing.T) {
 	}
 	testUseCase.EXPECT().GetFilms("Drama", "", "").Return(films, nil)
 	request = httptest.NewRequest(http.MethodGet, "/films?genre=Drama", nil)
+	ctx = request.Context()
+	ctx = context.WithValue(ctx, middleware.MyLoggerKey, logger)
 	respWriter = httptest.NewRecorder()
-	testHandler.GetFilms(respWriter, request)
+	testHandler.GetFilms(respWriter, request.WithContext(ctx))
 	resp = respWriter.Result()
 	_, err = io.ReadAll(resp.Body)
 	if err != nil {
@@ -97,14 +104,16 @@ func TestGetFilms(t *testing.T) {
 func TestGetFilmByID(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-
+	logger := zap.NewNop().Sugar()
 	testUseCase := filmusecase.NewMockFilmUseCase(ctrl)
-	testHandler := NewFilmHandler(testUseCase, zap.NewNop().Sugar())
+	testHandler := NewFilmHandler(testUseCase)
 	// bad film id
 	request := httptest.NewRequest(http.MethodGet, "/film/bad_id", nil)
 	request = mux.SetURLVars(request, map[string]string{"FILM_ID": "bad_id"})
+	ctx := request.Context()
+	ctx = context.WithValue(ctx, middleware.MyLoggerKey, logger)
 	respWriter := httptest.NewRecorder()
-	testHandler.GetFilmByID(respWriter, request)
+	testHandler.GetFilmByID(respWriter, request.WithContext(ctx))
 	resp := respWriter.Result()
 	_, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -125,9 +134,10 @@ func TestGetFilmByID(t *testing.T) {
 	testUseCase.EXPECT().GetFilmByID(filmID).Return(nil, fmt.Errorf("error"))
 	request = httptest.NewRequest(http.MethodGet, "/film/1", nil)
 	request = mux.SetURLVars(request, map[string]string{"FILM_ID": "1"})
-
+	ctx = request.Context()
+	ctx = context.WithValue(ctx, middleware.MyLoggerKey, logger)
 	respWriter = httptest.NewRecorder()
-	testHandler.GetFilmByID(respWriter, request)
+	testHandler.GetFilmByID(respWriter, request.WithContext(ctx))
 	resp = respWriter.Result()
 	_, err = io.ReadAll(resp.Body)
 	if err != nil {
@@ -147,8 +157,10 @@ func TestGetFilmByID(t *testing.T) {
 	testUseCase.EXPECT().GetFilmByID(filmID).Return(nil, nil)
 	request = httptest.NewRequest(http.MethodGet, "/film/1", nil)
 	request = mux.SetURLVars(request, map[string]string{"FILM_ID": "1"})
+	ctx = request.Context()
+	ctx = context.WithValue(ctx, middleware.MyLoggerKey, logger)
 	respWriter = httptest.NewRecorder()
-	testHandler.GetFilmByID(respWriter, request)
+	testHandler.GetFilmByID(respWriter, request.WithContext(ctx))
 	resp = respWriter.Result()
 	_, err = io.ReadAll(resp.Body)
 	if err != nil {
@@ -179,8 +191,10 @@ func TestGetFilmByID(t *testing.T) {
 	testUseCase.EXPECT().GetFilmByID(filmID).Return(film, nil)
 	request = httptest.NewRequest(http.MethodGet, "/film/1", nil)
 	request = mux.SetURLVars(request, map[string]string{"FILM_ID": "1"})
+	ctx = request.Context()
+	ctx = context.WithValue(ctx, middleware.MyLoggerKey, logger)
 	respWriter = httptest.NewRecorder()
-	testHandler.GetFilmByID(respWriter, request)
+	testHandler.GetFilmByID(respWriter, request.WithContext(ctx))
 	resp = respWriter.Result()
 	_, err = io.ReadAll(resp.Body)
 	if err != nil {
@@ -200,13 +214,15 @@ func TestGetFilmByID(t *testing.T) {
 func TestGeyFavouriteFilms(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
+	logger := zap.NewNop().Sugar()
 
 	testUseCase := filmusecase.NewMockFilmUseCase(ctrl)
-	testHandler := NewFilmHandler(testUseCase, zap.NewNop().Sugar())
+	testHandler := NewFilmHandler(testUseCase)
 	// bad user in context
 	request := httptest.NewRequest(http.MethodGet, "/films/favourite", nil)
 	ctx := request.Context()
 	ctx = context.WithValue(ctx, middleware.MyUserKey, "bad user")
+	ctx = context.WithValue(ctx, middleware.MyLoggerKey, logger)
 	respWriter := httptest.NewRecorder()
 	testHandler.GetFavouriteFilms(respWriter, request.WithContext(ctx))
 	resp := respWriter.Result()
@@ -232,6 +248,7 @@ func TestGeyFavouriteFilms(t *testing.T) {
 	ctx = context.WithValue(ctx, middleware.MyUserKey, &entity.User{
 		ID: 1,
 	})
+	ctx = context.WithValue(ctx, middleware.MyLoggerKey, logger)
 	respWriter = httptest.NewRecorder()
 	testHandler.GetFavouriteFilms(respWriter, request.WithContext(ctx))
 	resp = respWriter.Result()
@@ -269,6 +286,7 @@ func TestGeyFavouriteFilms(t *testing.T) {
 	ctx = context.WithValue(ctx, middleware.MyUserKey, &entity.User{
 		ID: 1,
 	})
+	ctx = context.WithValue(ctx, middleware.MyLoggerKey, logger)
 	respWriter = httptest.NewRecorder()
 	testHandler.GetFavouriteFilms(respWriter, request.WithContext(ctx))
 	resp = respWriter.Result()
@@ -290,14 +308,16 @@ func TestGeyFavouriteFilms(t *testing.T) {
 func TestAddFavouriteFilm(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
+	logger := zap.NewNop().Sugar()
 
 	testUseCase := filmusecase.NewMockFilmUseCase(ctrl)
-	testHandler := NewFilmHandler(testUseCase, zap.NewNop().Sugar())
+	testHandler := NewFilmHandler(testUseCase)
 
 	// bad user in context
 	request := httptest.NewRequest(http.MethodPost, "/films/favourite/1", nil)
 	ctx := request.Context()
 	ctx = context.WithValue(ctx, middleware.MyUserKey, "bad user")
+	ctx = context.WithValue(ctx, middleware.MyLoggerKey, logger)
 	respWriter := httptest.NewRecorder()
 	testHandler.AddFavouriteFilm(respWriter, request.WithContext(ctx))
 	resp := respWriter.Result()
@@ -322,6 +342,7 @@ func TestAddFavouriteFilm(t *testing.T) {
 	ctx = context.WithValue(ctx, middleware.MyUserKey, &entity.User{
 		ID: 1,
 	})
+	ctx = context.WithValue(ctx, middleware.MyLoggerKey, logger)
 	respWriter = httptest.NewRecorder()
 	testHandler.AddFavouriteFilm(respWriter, request.WithContext(ctx))
 	resp = respWriter.Result()
@@ -351,6 +372,7 @@ func TestAddFavouriteFilm(t *testing.T) {
 	ctx = context.WithValue(ctx, middleware.MyUserKey, &entity.User{
 		ID: 1,
 	})
+	ctx = context.WithValue(ctx, middleware.MyLoggerKey, logger)
 	respWriter = httptest.NewRecorder()
 	testHandler.AddFavouriteFilm(respWriter, request.WithContext(ctx))
 	resp = respWriter.Result()
@@ -376,6 +398,7 @@ func TestAddFavouriteFilm(t *testing.T) {
 	ctx = context.WithValue(ctx, middleware.MyUserKey, &entity.User{
 		ID: 1,
 	})
+	ctx = context.WithValue(ctx, middleware.MyLoggerKey, logger)
 	respWriter = httptest.NewRecorder()
 	testHandler.AddFavouriteFilm(respWriter, request.WithContext(ctx))
 	resp = respWriter.Result()
@@ -401,6 +424,7 @@ func TestAddFavouriteFilm(t *testing.T) {
 	ctx = context.WithValue(ctx, middleware.MyUserKey, &entity.User{
 		ID: 1,
 	})
+	ctx = context.WithValue(ctx, middleware.MyLoggerKey, logger)
 	respWriter = httptest.NewRecorder()
 	testHandler.AddFavouriteFilm(respWriter, request.WithContext(ctx))
 	resp = respWriter.Result()
@@ -426,6 +450,7 @@ func TestAddFavouriteFilm(t *testing.T) {
 	ctx = context.WithValue(ctx, middleware.MyUserKey, &entity.User{
 		ID: 1,
 	})
+	ctx = context.WithValue(ctx, middleware.MyLoggerKey, logger)
 	respWriter = httptest.NewRecorder()
 	testHandler.AddFavouriteFilm(respWriter, request.WithContext(ctx))
 	resp = respWriter.Result()

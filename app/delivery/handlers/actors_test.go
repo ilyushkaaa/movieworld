@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"fmt"
 	"github.com/golang/mock/gomock"
 	"github.com/gorilla/mux"
@@ -8,6 +9,7 @@ import (
 	"io"
 	actorusecase "kinopoisk/app/actors/usecase"
 	"kinopoisk/app/entity"
+	"kinopoisk/app/middleware"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -16,14 +18,15 @@ import (
 func TestGetActors(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-
+	logger := zap.NewNop().Sugar()
+	ctx := context.WithValue(context.Background(), middleware.MyLoggerKey, logger)
 	testUseCase := actorusecase.NewMockActorUseCase(ctrl)
-	testHandler := NewActorHandler(testUseCase, zap.NewNop().Sugar())
+	testHandler := NewActorHandler(testUseCase)
 	// usecase returns error
 	testUseCase.EXPECT().GetActors().Return(nil, fmt.Errorf("error"))
 	request := httptest.NewRequest(http.MethodGet, "/actors/", nil)
 	respWriter := httptest.NewRecorder()
-	testHandler.GetActors(respWriter, request)
+	testHandler.GetActors(respWriter, request.WithContext(ctx))
 	resp := respWriter.Result()
 	_, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -52,7 +55,7 @@ func TestGetActors(t *testing.T) {
 	testUseCase.EXPECT().GetActors().Return(actors, nil)
 	request = httptest.NewRequest(http.MethodGet, "/actors/", nil)
 	respWriter = httptest.NewRecorder()
-	testHandler.GetActors(respWriter, request)
+	testHandler.GetActors(respWriter, request.WithContext(ctx))
 	resp = respWriter.Result()
 	_, err = io.ReadAll(resp.Body)
 	if err != nil {
@@ -72,14 +75,16 @@ func TestGetActors(t *testing.T) {
 func TestGetActorByID(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
-
+	logger := zap.NewNop().Sugar()
 	testUseCase := actorusecase.NewMockActorUseCase(ctrl)
-	testHandler := NewActorHandler(testUseCase, zap.NewNop().Sugar())
+	testHandler := NewActorHandler(testUseCase)
 	// bad id format
 	request := httptest.NewRequest(http.MethodGet, "/actor/bad", nil)
 	request = mux.SetURLVars(request, map[string]string{"ACTOR_ID": "bad"})
+	ctx := request.Context()
+	ctx = context.WithValue(ctx, middleware.MyLoggerKey, logger)
 	respWriter := httptest.NewRecorder()
-	testHandler.GetActorByID(respWriter, request)
+	testHandler.GetActorByID(respWriter, request.WithContext(ctx))
 	resp := respWriter.Result()
 	_, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -100,9 +105,10 @@ func TestGetActorByID(t *testing.T) {
 	testUseCase.EXPECT().GetActorByID(ID).Return(nil, fmt.Errorf("error"))
 	request = httptest.NewRequest(http.MethodGet, "/actor/1", nil)
 	request = mux.SetURLVars(request, map[string]string{"ACTOR_ID": "1"})
-
+	ctx = request.Context()
+	ctx = context.WithValue(ctx, middleware.MyLoggerKey, logger)
 	respWriter = httptest.NewRecorder()
-	testHandler.GetActorByID(respWriter, request)
+	testHandler.GetActorByID(respWriter, request.WithContext(ctx))
 	resp = respWriter.Result()
 	_, err = io.ReadAll(resp.Body)
 	if err != nil {
@@ -123,8 +129,10 @@ func TestGetActorByID(t *testing.T) {
 	testUseCase.EXPECT().GetActorByID(ID).Return(nil, nil)
 	request = httptest.NewRequest(http.MethodGet, "/actor/1", nil)
 	request = mux.SetURLVars(request, map[string]string{"ACTOR_ID": "1"})
+	ctx = request.Context()
+	ctx = context.WithValue(ctx, middleware.MyLoggerKey, logger)
 	respWriter = httptest.NewRecorder()
-	testHandler.GetActorByID(respWriter, request)
+	testHandler.GetActorByID(respWriter, request.WithContext(ctx))
 	resp = respWriter.Result()
 	_, err = io.ReadAll(resp.Body)
 	if err != nil {
@@ -151,8 +159,10 @@ func TestGetActorByID(t *testing.T) {
 	testUseCase.EXPECT().GetActorByID(ID).Return(actor, nil)
 	request = httptest.NewRequest(http.MethodGet, "/actor/1", nil)
 	request = mux.SetURLVars(request, map[string]string{"ACTOR_ID": "1"})
+	ctx = request.Context()
+	ctx = context.WithValue(ctx, middleware.MyLoggerKey, logger)
 	respWriter = httptest.NewRecorder()
-	testHandler.GetActorByID(respWriter, request)
+	testHandler.GetActorByID(respWriter, request.WithContext(ctx))
 	resp = respWriter.Result()
 	_, err = io.ReadAll(resp.Body)
 	if err != nil {

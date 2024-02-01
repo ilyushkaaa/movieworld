@@ -3,23 +3,30 @@ package middleware
 import (
 	"context"
 	"fmt"
-	"go.uber.org/zap"
 	"kinopoisk/app/delivery"
 	userusecase "kinopoisk/app/users/usecase"
+	"log"
 	"net/http"
 	"strings"
 )
 
 type userKey int
 type tokenKey int
+type loggerKey int
 
 const (
-	MyUserKey  userKey  = 1
-	MyTokenKey tokenKey = 2
+	MyUserKey   userKey   = 1
+	MyTokenKey  tokenKey  = 2
+	MyLoggerKey loggerKey = 3
 )
 
-func AuthMiddleware(logger *zap.SugaredLogger, uc userusecase.UserUseCase, next http.Handler) http.Handler {
+func AuthMiddleware(uc userusecase.UserUseCase, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		logger, err := GetLoggerFromContext(r.Context())
+		if err != nil {
+			log.Printf("can not get logger from context: %s", err)
+			WriteNoLoggerResponse(w)
+		}
 		logger.Infof("auth middleware start")
 		authHeader := r.Header.Get("Authorization")
 		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {

@@ -1,12 +1,17 @@
 package middleware
 
 import (
-	"go.uber.org/zap"
+	"log"
 	"net/http"
 )
 
-func ErrorLog(logger *zap.SugaredLogger, next http.Handler) http.Handler {
+func ErrorLog(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		logger, err := GetLoggerFromContext(r.Context())
+		if err != nil {
+			log.Printf("can not get logger from context: %s", err)
+			WriteNoLoggerResponse(w)
+		}
 		recorder := &responseRecorder{
 			ResponseWriter: w,
 		}

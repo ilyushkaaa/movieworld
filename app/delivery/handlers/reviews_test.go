@@ -27,14 +27,17 @@ func (er *errorReader) Read(_ []byte) (int, error) {
 func TestGetReviewsForFilm(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
+	logger := zap.NewNop().Sugar()
 
 	testUseCase := reviewusecase.NewMockReviewUseCase(ctrl)
-	testHandler := NewReviewHandler(testUseCase, zap.NewNop().Sugar())
+	testHandler := NewReviewHandler(testUseCase)
 	// bad film id
 	request := httptest.NewRequest(http.MethodGet, "/review/bad_id", nil)
 	request = mux.SetURLVars(request, map[string]string{"FILM_ID": "bad_id"})
+	ctx := request.Context()
+	ctx = context.WithValue(ctx, middleware.MyLoggerKey, logger)
 	respWriter := httptest.NewRecorder()
-	testHandler.GetReviewsForFilm(respWriter, request)
+	testHandler.GetReviewsForFilm(respWriter, request.WithContext(ctx))
 	resp := respWriter.Result()
 	_, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -55,9 +58,10 @@ func TestGetReviewsForFilm(t *testing.T) {
 	testUseCase.EXPECT().GetFilmReviews(filmID).Return(nil, fmt.Errorf("error"))
 	request = httptest.NewRequest(http.MethodGet, "/review/1", nil)
 	request = mux.SetURLVars(request, map[string]string{"FILM_ID": "1"})
-
+	ctx = request.Context()
+	ctx = context.WithValue(ctx, middleware.MyLoggerKey, logger)
 	respWriter = httptest.NewRecorder()
-	testHandler.GetReviewsForFilm(respWriter, request)
+	testHandler.GetReviewsForFilm(respWriter, request.WithContext(ctx))
 	resp = respWriter.Result()
 	_, err = io.ReadAll(resp.Body)
 	if err != nil {
@@ -88,8 +92,10 @@ func TestGetReviewsForFilm(t *testing.T) {
 	testUseCase.EXPECT().GetFilmReviews(filmID).Return(reviews, nil)
 	request = httptest.NewRequest(http.MethodGet, "/review/1", nil)
 	request = mux.SetURLVars(request, map[string]string{"FILM_ID": "1"})
+	ctx = request.Context()
+	ctx = context.WithValue(ctx, middleware.MyLoggerKey, logger)
 	respWriter = httptest.NewRecorder()
-	testHandler.GetReviewsForFilm(respWriter, request)
+	testHandler.GetReviewsForFilm(respWriter, request.WithContext(ctx))
 	resp = respWriter.Result()
 	_, err = io.ReadAll(resp.Body)
 	if err != nil {
@@ -110,14 +116,17 @@ func TestGetReviewsForFilm(t *testing.T) {
 func TestAddReview(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
+	logger := zap.NewNop().Sugar()
 
 	testUseCase := reviewusecase.NewMockReviewUseCase(ctrl)
-	testHandler := NewReviewHandler(testUseCase, zap.NewNop().Sugar())
+	testHandler := NewReviewHandler(testUseCase)
 	// bad film id
 	request := httptest.NewRequest(http.MethodPost, "/review/bad_id", nil)
 	request = mux.SetURLVars(request, map[string]string{"FILM_ID": "bad_id"})
+	ctx := request.Context()
+	ctx = context.WithValue(ctx, middleware.MyLoggerKey, logger)
 	respWriter := httptest.NewRecorder()
-	testHandler.AddReview(respWriter, request)
+	testHandler.AddReview(respWriter, request.WithContext(ctx))
 	resp := respWriter.Result()
 	_, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -136,8 +145,9 @@ func TestAddReview(t *testing.T) {
 	// bad user in context
 	request = httptest.NewRequest(http.MethodPost, "/review/1", nil)
 	request = mux.SetURLVars(request, map[string]string{"FILM_ID": "1"})
-	ctx := request.Context()
+	ctx = request.Context()
 	ctx = context.WithValue(ctx, middleware.MyUserKey, "bad user")
+	ctx = context.WithValue(ctx, middleware.MyLoggerKey, logger)
 	respWriter = httptest.NewRecorder()
 	testHandler.AddReview(respWriter, request.WithContext(ctx))
 	resp = respWriter.Result()
@@ -163,6 +173,7 @@ func TestAddReview(t *testing.T) {
 		ID:       1,
 		Username: "vasya",
 	})
+	ctx = context.WithValue(ctx, middleware.MyLoggerKey, logger)
 	respWriter = httptest.NewRecorder()
 	testHandler.AddReview(respWriter, request.WithContext(ctx))
 	resp = respWriter.Result()
@@ -187,6 +198,7 @@ func TestAddReview(t *testing.T) {
 		ID:       1,
 		Username: "vasya",
 	})
+	ctx = context.WithValue(ctx, middleware.MyLoggerKey, logger)
 	respWriter = httptest.NewRecorder()
 	testHandler.AddReview(respWriter, request.WithContext(ctx))
 	resp = respWriter.Result()
@@ -210,6 +222,7 @@ func TestAddReview(t *testing.T) {
 		ID:       1,
 		Username: "vasya",
 	})
+	ctx = context.WithValue(ctx, middleware.MyLoggerKey, logger)
 	respWriter = httptest.NewRecorder()
 	testHandler.AddReview(respWriter, request.WithContext(ctx))
 	resp = respWriter.Result()
@@ -240,6 +253,7 @@ func TestAddReview(t *testing.T) {
 	request = mux.SetURLVars(request, map[string]string{"FILM_ID": "1"})
 	ctx = request.Context()
 	ctx = context.WithValue(ctx, middleware.MyUserKey, author)
+	ctx = context.WithValue(ctx, middleware.MyLoggerKey, logger)
 	respWriter = httptest.NewRecorder()
 	testHandler.AddReview(respWriter, request.WithContext(ctx))
 	resp = respWriter.Result()
@@ -262,6 +276,7 @@ func TestAddReview(t *testing.T) {
 	request = mux.SetURLVars(request, map[string]string{"FILM_ID": "1"})
 	ctx = request.Context()
 	ctx = context.WithValue(ctx, middleware.MyUserKey, author)
+	ctx = context.WithValue(ctx, middleware.MyLoggerKey, logger)
 	respWriter = httptest.NewRecorder()
 	testHandler.AddReview(respWriter, request.WithContext(ctx))
 	resp = respWriter.Result()
@@ -284,6 +299,7 @@ func TestAddReview(t *testing.T) {
 	request = mux.SetURLVars(request, map[string]string{"FILM_ID": "1"})
 	ctx = request.Context()
 	ctx = context.WithValue(ctx, middleware.MyUserKey, author)
+	ctx = context.WithValue(ctx, middleware.MyLoggerKey, logger)
 	respWriter = httptest.NewRecorder()
 	testHandler.AddReview(respWriter, request.WithContext(ctx))
 	resp = respWriter.Result()
@@ -307,6 +323,7 @@ func TestAddReview(t *testing.T) {
 	request = mux.SetURLVars(request, map[string]string{"FILM_ID": "1"})
 	ctx = request.Context()
 	ctx = context.WithValue(ctx, middleware.MyUserKey, author)
+	ctx = context.WithValue(ctx, middleware.MyLoggerKey, logger)
 	respWriter = httptest.NewRecorder()
 	testHandler.AddReview(respWriter, request.WithContext(ctx))
 	resp = respWriter.Result()
@@ -327,15 +344,17 @@ func TestAddReview(t *testing.T) {
 func TestDeleteReview(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
+	logger := zap.NewNop().Sugar()
 
 	testUseCase := reviewusecase.NewMockReviewUseCase(ctrl)
-	testHandler := NewReviewHandler(testUseCase, zap.NewNop().Sugar())
+	testHandler := NewReviewHandler(testUseCase)
 
 	// bad user in context
 	request := httptest.NewRequest(http.MethodDelete, "/review/1", nil)
 	request = mux.SetURLVars(request, map[string]string{"REVIEW_ID": "1"})
 	ctx := request.Context()
 	ctx = context.WithValue(ctx, middleware.MyUserKey, "bad user")
+	ctx = context.WithValue(ctx, middleware.MyLoggerKey, logger)
 	respWriter := httptest.NewRecorder()
 	testHandler.DeleteReview(respWriter, request.WithContext(ctx))
 	resp := respWriter.Result()
@@ -363,6 +382,7 @@ func TestDeleteReview(t *testing.T) {
 	respWriter = httptest.NewRecorder()
 	ctx = request.Context()
 	ctx = context.WithValue(ctx, middleware.MyUserKey, author)
+	ctx = context.WithValue(ctx, middleware.MyLoggerKey, logger)
 	testHandler.DeleteReview(respWriter, request.WithContext(ctx))
 	resp = respWriter.Result()
 	_, err = io.ReadAll(resp.Body)

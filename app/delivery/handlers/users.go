@@ -12,23 +12,28 @@ import (
 	errorapp "kinopoisk/app/errors"
 	"kinopoisk/app/middleware"
 	userusecase "kinopoisk/app/users/usecase"
+	"log"
 	"net/http"
 )
 
 type UserHandler struct {
 	UserUseCases userusecase.UserUseCase
-	Logger       *zap.SugaredLogger
 }
 
-func NewUserHandler(userUseCases userusecase.UserUseCase, logger *zap.SugaredLogger) *UserHandler {
+func NewUserHandler(userUseCases userusecase.UserUseCase) *UserHandler {
 	return &UserHandler{
 		UserUseCases: userUseCases,
-		Logger:       logger,
 	}
 }
 
 func (uh *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
-	userFromLoginForm, err := checkRequestFormat(uh.Logger, w, r)
+	ctx := r.Context()
+	logger, err := middleware.GetLoggerFromContext(ctx)
+	if err != nil {
+		log.Printf("can not get logger from context: %s", err)
+		middleware.WriteNoLoggerResponse(w)
+	}
+	userFromLoginForm, err := checkRequestFormat(logger, w, r)
 	if err != nil || userFromLoginForm == nil {
 		return
 	}
@@ -36,41 +41,47 @@ func (uh *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	if err != nil {
 		errText := fmt.Sprintf(`{"message": "error in getting user by login and password: %s"}`, err)
-		delivery.WriteResponse(uh.Logger, w, []byte(errText), http.StatusInternalServerError)
+		delivery.WriteResponse(logger, w, []byte(errText), http.StatusInternalServerError)
 		return
 	}
 	if loggedInUser == nil {
-		delivery.WriteResponse(uh.Logger, w, []byte(`{"message": "bad username or password"}`), http.StatusUnauthorized)
+		delivery.WriteResponse(logger, w, []byte(`{"message": "bad username or password"}`), http.StatusUnauthorized)
 		return
 	}
-	uh.HandleGetToken(w, loggedInUser)
+	uh.HandleGetToken(w, loggedInUser, logger)
 
 }
 
 func (uh *UserHandler) Register(w http.ResponseWriter, r *http.Request) {
-	userFromLoginForm, err := checkRequestFormat(uh.Logger, w, r)
+	ctx := r.Context()
+	logger, err := middleware.GetLoggerFromContext(ctx)
+	if err != nil {
+		log.Printf("can not get logger from context: %s", err)
+		middleware.WriteNoLoggerResponse(w)
+	}
+	userFromLoginForm, err := checkRequestFormat(logger, w, r)
 	if err != nil || userFromLoginForm == nil {
 		return
 	}
 	newUser, err := uh.UserUseCases.Register(userFromLoginForm.Username, userFromLoginForm.Password)
 
 	if errors.Is(err, errorapp.ErrorUserExists) {
-		delivery.WriteResponse(uh.Logger, w, []byte(`{"message": "user already exists"}`), http.StatusUnprocessableEntity)
+		delivery.WriteResponse(logger, w, []byte(`{"message": "user already exists"}`), http.StatusUnprocessableEntity)
 		return
 	}
 	if err != nil {
 		errText := fmt.Sprintf(`{"message": "unknown error occured in register: %s"}`, err)
-		delivery.WriteResponse(uh.Logger, w, []byte(errText), http.StatusInternalServerError)
+		delivery.WriteResponse(logger, w, []byte(errText), http.StatusInternalServerError)
 		return
 	}
-	uh.HandleGetToken(w, newUser)
+	uh.HandleGetToken(w, newUser, logger)
 }
 
-func (uh *UserHandler) HandleGetToken(w http.ResponseWriter, newUser *entity.User) {
+func (uh *UserHandler) HandleGetToken(w http.ResponseWriter, newUser *entity.User, logger *zap.SugaredLogger) {
 	token, err := uh.UserUseCases.CreateSession(newUser)
 	if err != nil {
 		errText := fmt.Sprintf(`{"message": "error in session creation: %s"}`, err)
-		delivery.WriteResponse(uh.Logger, w, []byte(errText), http.StatusInternalServerError)
+		delivery.WriteResponse(logger, w, []byte(errText), http.StatusInternalServerError)
 		return
 	}
 	resp := dto.AuthResponseDTO{
@@ -79,11 +90,11 @@ func (uh *UserHandler) HandleGetToken(w http.ResponseWriter, newUser *entity.Use
 	tokenJSON, err := json.Marshal(&resp)
 	if err != nil {
 		errText := fmt.Sprintf(`{"message": "error in coding response: %s"}`, err)
-		delivery.WriteResponse(uh.Logger, w, []byte(errText), http.StatusInternalServerError)
+		delivery.WriteResponse(logger, w, []byte(errText), http.StatusInternalServerError)
 		return
 	}
-	uh.Logger.Infof("new token: %s", token)
-	delivery.WriteResponse(uh.Logger, w, tokenJSON, http.StatusOK)
+	logger.Infof("new token: %s", token)
+	delivery.WriteResponse(logger, w, tokenJSON, http.StatusOK)
 }
 
 func checkRequestFormat(logger *zap.SugaredLogger, w http.ResponseWriter, r *http.Request) (*dto.AuthRequestDTO, error) {
@@ -116,22 +127,27 @@ func checkRequestFormat(logger *zap.SugaredLogger, w http.ResponseWriter, r *htt
 
 func (uh *UserHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	logger, err := middleware.GetLoggerFromContext(ctx)
+	if err != nil {
+		log.Printf("can not get logger from context: %s", err)
+		middleware.WriteNoLoggerResponse(w)
+	}
 	token, ok := ctx.Value(middleware.MyTokenKey).(string)
 	if !ok {
-		delivery.WriteResponse(uh.Logger, w, []byte(`{"message": "can not cast context value to user"}`), http.StatusInternalServerError)
+		delivery.WriteResponse(logger, w, []byte(`{"message": "can not cast context value to user"}`), http.StatusInternalServerError)
 		return
 	}
 	isDeleted, err := uh.UserUseCases.DeleteSession(token)
 	if err != nil {
 		errText := fmt.Sprintf(`{"message": "error in logging out: %s"}`, err)
-		delivery.WriteResponse(uh.Logger, w, []byte(errText), http.StatusInternalServerError)
+		delivery.WriteResponse(logger, w, []byte(errText), http.StatusInternalServerError)
 		return
 	}
 	if !isDeleted {
 		errText := fmt.Sprintf(`{"message": "no session with token: %s"}`, token)
-		delivery.WriteResponse(uh.Logger, w, []byte(errText), http.StatusNotFound)
+		delivery.WriteResponse(logger, w, []byte(errText), http.StatusNotFound)
 		return
 	}
 	message := `{"result":"success"}`
-	delivery.WriteResponse(uh.Logger, w, []byte(message), http.StatusOK)
+	delivery.WriteResponse(logger, w, []byte(message), http.StatusOK)
 }
