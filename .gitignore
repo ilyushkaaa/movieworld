@@ -2,6 +2,7 @@
 .env
 service_review/.env
 service_auth/.env
+service_rating/.env
 app/delivery/handlers/cover.out
 app/delivery/handlers/cover.html
 app/films/usecase/cover.html
