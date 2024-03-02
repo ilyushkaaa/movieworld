@@ -36,7 +36,7 @@ CREATE TABLE IF NOT EXISTS `actors`
     PRIMARY KEY (`id`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
-CREATE TABLE IF NOT EXISTS actor_films
+CREATE TABLE IF NOT EXISTS `actor_films`
 (
     `id` int NOT NULL AUTO_INCREMENT,
     `film_id` int NOT NULL,

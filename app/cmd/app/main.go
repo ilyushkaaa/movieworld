@@ -2,6 +2,11 @@ package main
 
 import (
 	"database/sql"
+	"log"
+	"net/http"
+	"os"
+	"time"
+
 	"github.com/gomodule/redigo/redis"
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
@@ -21,16 +26,10 @@ import (
 	userusecase "kinopoisk/app/users/usecase"
 	auth "kinopoisk/service_auth/proto"
 	review "kinopoisk/service_review/proto"
-	"log"
-	"net/http"
-	"os"
-	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/joho/godotenv"
 )
-
-// TODO поменять адреса серверов на их имена из доккер компоус
 
 const (
 	maxDBConnections  = 10

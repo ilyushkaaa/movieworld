@@ -3,20 +3,22 @@ package handlers
 import (
 	"context"
 	"fmt"
+	"io"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+
 	"github.com/golang/mock/gomock"
 	"github.com/gorilla/mux"
 	"go.uber.org/zap"
-	"io"
 	"kinopoisk/app/entity"
 	errorapp "kinopoisk/app/errors"
 	filmusecase "kinopoisk/app/films/usecase"
 	"kinopoisk/app/middleware"
-	"net/http"
-	"net/http/httptest"
-	"testing"
 )
 
 func TestGetFilms(t *testing.T) {
+	t.Parallel()
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	logger := zap.NewNop().Sugar()
@@ -102,6 +104,8 @@ func TestGetFilms(t *testing.T) {
 }
 
 func TestGetFilmByID(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	logger := zap.NewNop().Sugar()
@@ -212,6 +216,8 @@ func TestGetFilmByID(t *testing.T) {
 }
 
 func TestGeyFavouriteFilms(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	logger := zap.NewNop().Sugar()
@@ -306,6 +312,8 @@ func TestGeyFavouriteFilms(t *testing.T) {
 }
 
 func TestAddFavouriteFilm(t *testing.T) {
+	t.Parallel()
+
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	logger := zap.NewNop().Sugar()
